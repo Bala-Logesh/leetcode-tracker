@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 
 import tagsRouter from './router/tags'
+import connectToDB from './database/db'
 import { notFound } from './middlewares/notFound'
 import { errorHandler } from './middlewares/errorHandler'
 
@@ -23,6 +24,8 @@ app.use(notFound)
 // Error handler middleware
 app.use(errorHandler)
 
-app.listen(PORT, () => {
+connectToDB().then(() => {
+  app.listen(PORT, () => {
     console.log(`Server started at http://127.0.0.1:${PORT}`)
+  })
 })
