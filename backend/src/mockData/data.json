@@ -37,5 +37,24 @@
     "datesAttempted": ["2023-10-01", "2023-12-15"],
     "pointsToRemember": null,
     "dpPoints": null
+  },
+  {
+    "_id": "69b9ae3c0969d60018aab526",
+    "problemNo": 101,
+    "name": "Two Sum",
+    "tags": ["Array", "Hash Table", "LeetCode Top 100", "Testing"],
+    "solutions": [
+      ["function twoSum(nums, target) { ... }asdfsadfas"],
+      ["testingnnnn"]
+    ],
+    "pointsToRemember": [
+      "If we start from the 0th index, we have to return the len of s - index as base case",
+      "This is essentially the Fibonacci sequence. Space can be optimized to O(1) by only keeping track of the last two values instead of a full DP array."
+    ],
+    "dpPoints": [
+      "Recurrence Relation: dp[n] = dp[n - 1] + dp[n - 2]",
+      "Base Cases: dp[1] = 1, dp[2] = 2"
+    ],
+    "datesAttempted": ["2023-10-01", "2023-12-15", "2024-10-01"]
   }
 ]

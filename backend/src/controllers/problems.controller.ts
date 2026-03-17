@@ -3,7 +3,13 @@ import { APIError } from '../middlewares/errorHandler'
 import logger from '../logger/logger'
 import Problem from '../models/problem'
 import Solution from '../models/solutions'
-import { createSolution, createSolutions } from '../helpers/solutions.helper'
+import { getOrCreateTags } from '../helpers/tags.helper'
+import {
+  createSolution,
+  createSolutions,
+  deleteAndUpdateSolution,
+  deleteAndUpdateSolutions,
+} from '../helpers/solutions.helper'
 
 // GET /problems
 export const getProblems = async (
@@ -143,6 +149,83 @@ export const createProblem = async (
   }
 }
 
+// PUT /problems/:problemId
+export const updateProblem = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { problemId } = req.params
+  try {
+    const updateData = req.body
+    let solDeleted = false
+
+    const problem = await Problem.findById(problemId)
+    if (!problem) {
+      logger.error(
+        `PUT /problems/${problemId} - Problem with id ${problemId} not found`
+      )
+      return next(new APIError(`Problem with id ${problemId} not found`, 404))
+    }
+
+    if (updateData.tags) {
+      updateData.tags = await getOrCreateTags(updateData.tags)
+    }
+
+    if (updateData.solutions) {
+      solDeleted = true
+      updateData.solutions = await deleteAndUpdateSolutions(
+        problem._id,
+        updateData.solutions
+      )
+    }
+
+    if (updateData.pointsToRemember) {
+      const pointsToRemId = await deleteAndUpdateSolution(
+        problem._id,
+        updateData.pointsToRemember,
+        solDeleted
+      )
+      updateData.pointsToRemember = pointsToRemId
+    }
+
+    if (updateData.dpPoints) {
+      const dpPointsId = await deleteAndUpdateSolution(
+        problem._id,
+        updateData.dpPoints,
+        solDeleted
+      )
+      updateData.dpPoints = dpPointsId
+    }
+
+    const updatedProblem = await Problem.findByIdAndUpdate(
+      problem._id,
+      { $set: updateData },
+      { returnDocument: 'after', runValidators: true }
+    )
+      .populate('tags')
+      .populate('solutions')
+      .populate('dpPoints')
+      .populate('pointsToRemember')
+      .lean()
+
+    logger.info(
+      `PUT /problems/${problemId} - updated problem with id ${problemId} successfully`
+    )
+
+    res.status(200).json({
+      success: true,
+      data: updatedProblem,
+    })
+  } catch (err) {
+    logger.error(
+      `PUT /problems/${problemId} - error updating problem`,
+      err as Error
+    )
+    next(new APIError('Failed to update problem', 500))
+  }
+}
+
 // DELETE /problems/problemId
 export const deleteProblem = async (
   req: Request,
@@ -151,7 +234,6 @@ export const deleteProblem = async (
 ): Promise<void> => {
   const { problemId } = req.params
   try {
-    // 1. Find the problem first to get its solution IDs
     const problem = await Problem.findById(problemId)
 
     if (!problem) {
