@@ -1,3 +1,8 @@
+<script setup lang="ts">
+import ProblemForm from './components/ProblemForm.vue';
+
+</script>
+
 <template>
-  <h1>Hello</h1>
+  <ProblemForm />
 </template>
