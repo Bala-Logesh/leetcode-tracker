@@ -3,9 +3,9 @@ export type ICreateProblem = {
   name: string
   tags: string[]
   solutions: string[][]
-  pointsToRemember: string[]
-  dpPoints: string[]
-  datesAttempted: string[]
+  pointsToRemember?: string[]
+  dpPoints?: string[]
+  datesAttempted?: string[]
 }
 
 export const DEFAULT_CREATE_PROBLEM: ICreateProblem = {
@@ -14,6 +14,6 @@ export const DEFAULT_CREATE_PROBLEM: ICreateProblem = {
   tags: [],
   solutions: [[]],
   pointsToRemember: [],
-  dpPoints: [],
+  dpPoints: ['', ''],
   datesAttempted: [],
 }

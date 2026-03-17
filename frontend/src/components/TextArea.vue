@@ -1,6 +1,6 @@
 <template>
     <label :for="name">{{ name }}</label>
-    <textarea :name="name" v-model="textData" :placeholder="placeholder" rows="3" />
+    <textarea :name="name" v-model="textData" :placeholder="placeholder" rows="3" :class="{ 'error': hasError }" />
     <button v-if="index !== undefined && removeSolution" @click="removeSolution(index)">Remove</button>
 </template>
 
@@ -12,6 +12,7 @@ const props = defineProps<{
     name: string,
     index?: number,
     removeSolution?: (index: number) => void
+    hasError?: boolean
 }>()
 
 const solution = defineModel<string[]>()
@@ -27,4 +28,8 @@ const textData = computed({
 
 </script>
 
-<style></style>
+<style>
+textarea.error {
+    border-color: #ff4d4f !important;
+}
+</style>

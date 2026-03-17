@@ -1,10 +1,13 @@
 <template>
-    <Input name="Problem Title" v-model="problemTitle" placeholder="Q#. Problem name" />
+    {{ formErrors }}
+    <Input name="Problem Title" v-model="problemTitle" placeholder="Q#. Problem name"
+        :hasError="!!formErrors.name || !!formErrors.problemNo" />
 
-    <TagsSelector v-model="problem.tags" />
+    <TagsSelector v-model="problem.tags" :hasError="!!formErrors.tags" />
 
     <TextArea v-for="(_, index) of problem.solutions" name="Solution" v-model="problem.solutions[index]"
-        placeholder="Multiple line solutions" :index="index" :removeSolution="removeSolution" />
+        placeholder="Multiple line solutions" :index="index" :removeSolution="removeSolution"
+        :hasError="!!formErrors.solutions" />
 
     <button @click="addSolution">Add New Solution</button>
 
@@ -17,7 +20,10 @@
     </div>
 
     <TextArea name="Points To Remember" v-model="problem.pointsToRemember" placeholder="Multiple line points" />
-    
+
+    <button @click="addTodayToAttemptedDates">Attempted Today</button>
+
+    <button @click="handleSubmit">Submit</button>
     {{ problem }}
 </template>
 
@@ -27,9 +33,13 @@ import { DEFAULT_CREATE_PROBLEM, type ICreateProblem } from '../types/problem';
 import TagsSelector from './TagsSelector.vue';
 import Input from './Input.vue';
 import TextArea from './TextArea.vue';
+import { getTodayDate } from '../helpers/date';
+import { validateForm } from '../helpers/form';
 
 const problem = ref<ICreateProblem>(DEFAULT_CREATE_PROBLEM)
+const formErrors = ref<Record<string, string>>({})
 
+// Add and remove solution text areas
 const addSolution = (): void => {
     problem.value.solutions.push([]);
 };
@@ -38,10 +48,11 @@ const removeSolution = (index: number): void => {
     problem.value.solutions.splice(index, 1);
 };
 
+// Computed prop and update function for dp parts - recursive relation and base case
 const dpPoints = computed({
     get() {
         const points = problem.value.dpPoints || [];
-        return [points[0] || "", points[1] || ""];
+        return [points[0], points[1]];
     },
     set(newValue: string[]) {
         problem.value.dpPoints = [...newValue];
@@ -54,6 +65,7 @@ const updateDPPoints = (index: number, val: string) => {
     dpPoints.value = updated;
 };
 
+// Computed prop to get problem number and title
 const problemTitle = computed({
     get() {
         if (problem.value.problemNo !== 0)
@@ -74,6 +86,22 @@ const problemTitle = computed({
         }
     }
 })
+
+// Function to add today to attempted dates
+const addTodayToAttemptedDates = () => {
+    problem.value.datesAttempted?.push(getTodayDate());
+}
+
+// Handle submit
+const handleSubmit = () => {
+    const { isValid, errors, sanitizedData } = validateForm(problem.value)
+
+    if (!isValid) {
+        formErrors.value = errors
+    } else {
+        console.log("sanitizedData", sanitizedData)
+    }
+}
 </script>
 
 <style></style>
