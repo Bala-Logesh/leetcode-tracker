@@ -15,9 +15,7 @@ export const getTags = async (
 
     logger.info(`GET /tags - returned ${tags.length} tags`)
 
-    res.status(200).json({
-      data: tags,
-    })
+    res.status(200).json({ success: true, data: tags })
   } catch (err) {
     logger.error(`GET /tags - error getting tags`, err as Error)
     next(new APIError('Failed to get tags', 500))
@@ -53,9 +51,7 @@ export const updateTag = async (
 
     logger.info(`PATCH /tags/${tagId} - Tag renamed to "${name}"`)
 
-    res.status(200).json({
-      data: updatedTag,
-    })
+    res.status(200).json({ success: true, data: updatedTag })
   } catch (err) {
     if ((err as any).code === 11000) {
       return next(new APIError('A tag with this name already exists', 400))
@@ -94,6 +90,7 @@ export const deleteTag = async (
     )
 
     res.status(200).json({
+      success: true,
       message: `Tag deleted and removed from ${updateResult.modifiedCount} problems`,
     })
   } catch (err) {

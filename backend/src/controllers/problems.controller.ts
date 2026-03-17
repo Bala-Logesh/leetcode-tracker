@@ -37,6 +37,7 @@ export const getProblems = async (
     )
 
     res.status(200).json({
+      success: true,
       data: problems,
       pagination: {
         total,
@@ -74,9 +75,7 @@ export const getProblemById = async (
 
     logger.info(`GET /problems/${problemId} - Success`)
 
-    res.status(200).json({
-      data: problem,
-    })
+    res.status(200).json({ success: true, data: problem })
   } catch (err) {
     logger.error(`GET /problems/${problemId} - Error`, err as Error)
 
@@ -177,6 +176,7 @@ export const deleteProblem = async (
     logger.info(`DELETE /problems/${problemId} - Success`)
 
     res.status(200).json({
+      success: true,
       message: 'Problem and associated solutions deleted successfully',
     })
   } catch (err) {
