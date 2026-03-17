@@ -22,15 +22,29 @@ const tagSchema = new mongoose.Schema(
   }
 )
 
+const slugify = (name: string): string => {
+  return name
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s-]+/g, '_')
+}
+
 tagSchema.pre('save', function () {
   if (this.isModified('name')) {
-    this.slug = this.name
-      .toLowerCase()
-      .trim()
-      .replace(/[^\w\s-]/g, '')
-      .replace(/[\s-]+/g, '_')
+    this.slug = slugify(this.name)
   }
 })
 
-const TagModel = mongoose.model('Tag', tagSchema)
-export default TagModel
+tagSchema.pre('findOneAndUpdate', function () {
+  const update = this.getUpdate() as any
+
+  if (update.$setOnInsert && update.$setOnInsert.name) {
+    update.$setOnInsert.slug = slugify(update.$setOnInsert.name)
+  } else if (update.name) {
+    update.slug = slugify(update.name)
+  }
+})
+
+const Tag = mongoose.model('Tag', tagSchema)
+export default Tag

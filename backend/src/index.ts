@@ -2,6 +2,7 @@ import express from 'express'
 import cors from 'cors'
 
 import tagsRouter from './router/tags'
+import problemRouter from './router/problems'
 import connectToDB from './database/db'
 import { notFound } from './middlewares/notFound'
 import { errorHandler } from './middlewares/errorHandler'
@@ -17,6 +18,7 @@ app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
 
 app.use('/api/v1/tags', tagsRouter)
+app.use('/api/v1/problems', problemRouter)
 
 // Route not found middleware
 app.use(notFound)
