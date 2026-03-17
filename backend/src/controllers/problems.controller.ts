@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express'
 import { APIError } from '../middlewares/errorHandler'
 import logger from '../logger/logger'
 import Problem from '../models/problem'
+import Solution from '../models/solutions'
 import { createSolution, createSolutions } from '../helpers/solutions.helper'
 
 // GET /problems
@@ -140,5 +141,51 @@ export const createProblem = async (
   } catch (err) {
     logger.error(`POST /problems - error creating problems`, err as Error)
     next(new APIError('Failed to create problems', 500))
+  }
+}
+
+// DELETE /problems/problemId
+export const deleteProblem = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { problemId } = req.params
+  try {
+    // 1. Find the problem first to get its solution IDs
+    const problem = await Problem.findById(problemId)
+
+    if (!problem) {
+      logger.error(
+        `DELETE /problems/${problemId} - Problem with id ${problemId} not found`
+      )
+      return next(new APIError(`Problem with id ${problemId} not found`, 404))
+    }
+
+    const solutionIdsToDelete = [
+      ...(problem.solutions || []),
+      problem.pointsToRemember,
+      problem.dpPoints,
+    ].filter(Boolean)
+
+    if (solutionIdsToDelete.length > 0) {
+      await Solution.deleteMany({ _id: { $in: solutionIdsToDelete } })
+    }
+
+    await problem.deleteOne()
+
+    logger.info(`DELETE /problems/${problemId} - Success`)
+
+    res.status(200).json({
+      message: 'Problem and associated solutions deleted successfully',
+    })
+  } catch (err) {
+    logger.error(`DELETE /problems/${problemId} - Error`, err as Error)
+
+    if ((err as any).name === 'CastError') {
+      return next(new APIError('Invalid Problem ID format', 400))
+    }
+
+    next(new APIError('Failed to delete problem', 500))
   }
 }
