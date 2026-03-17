@@ -52,6 +52,41 @@ export const getProblems = async (
   }
 }
 
+// GET /problems/:problemId
+export const getProblemById = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { problemId } = req.params
+  try {
+    const problem = await Problem.findById(problemId)
+      .populate('tags')
+      .populate('solutions')
+      .populate('dpPoints')
+      .populate('pointsToRemember')
+      .lean()
+
+    if (!problem) {
+      return next(new APIError(`Problem with id ${problemId} not found`, 404))
+    }
+
+    logger.info(`GET /problems/${problemId} - Success`)
+
+    res.status(200).json({
+      data: problem,
+    })
+  } catch (err) {
+    logger.error(`GET /problems/${problemId} - Error`, err as Error)
+
+    if ((err as any).name === 'CastError') {
+      return next(new APIError('Invalid Problem ID format', 400))
+    }
+
+    next(new APIError('Failed to retrieve problem', 500))
+  }
+}
+
 // POST /problems
 export const createProblem = async (
   req: Request,
