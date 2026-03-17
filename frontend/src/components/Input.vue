@@ -5,6 +5,7 @@
 
 <script setup lang="ts">
 defineProps<{ placeholder: string, name: string }>()
+
 const model = defineModel<any>()
 </script>
 

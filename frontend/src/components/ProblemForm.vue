@@ -7,6 +7,17 @@
         placeholder="Multiple line solutions" :index="index" :removeSolution="removeSolution" />
 
     <button @click="addSolution">Add New Solution</button>
+
+    <div>
+        <p>DP Points</p>
+        <Input name="Recurrence Relation" :model-value="dpPoints[0]" @update:model-value="val => updateDPPoints(0, val)"
+            placeholder="Recurrence Relation" />
+        <Input name="Base Case" :model-value="dpPoints[1]" @update:model-value="val => updateDPPoints(1, val)"
+            placeholder="Base Case" />
+    </div>
+
+    <TextArea name="Points To Remember" v-model="problem.pointsToRemember" placeholder="Multiple line points" />
+    
     {{ problem }}
 </template>
 
@@ -25,6 +36,22 @@ const addSolution = (): void => {
 
 const removeSolution = (index: number): void => {
     problem.value.solutions.splice(index, 1);
+};
+
+const dpPoints = computed({
+    get() {
+        const points = problem.value.dpPoints || [];
+        return [points[0] || "", points[1] || ""];
+    },
+    set(newValue: string[]) {
+        problem.value.dpPoints = [...newValue];
+    }
+})
+
+const updateDPPoints = (index: number, val: string) => {
+    const updated = [...dpPoints.value];
+    updated[index] = val;
+    dpPoints.value = updated;
 };
 
 const problemTitle = computed({
