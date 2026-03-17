@@ -135,6 +135,13 @@ export const createProblem = async (
 
     await newProblem.save()
 
+    await newProblem.populate([
+      { path: 'tags' },
+      { path: 'solutions' },
+      { path: 'dpPoints' },
+      { path: 'pointsToRemember' },
+    ])
+
     logger.info(
       `POST /problems - created a problem with problem number = ${problemNo} and id = ${newProblem._id}`
     )

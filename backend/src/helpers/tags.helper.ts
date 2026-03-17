@@ -8,7 +8,7 @@ export const getOrCreateTags = async (
     tagNames.map(async (name) => {
       const tag = await Tag.findOneAndUpdate(
         { name: name.trim() },
-        { $setOnInsert: { name: name.trim() } },
+        { $setOnInsert: { name: name.trim() }, $inc: { count: 1 } },
         { upsert: true, returnDocument: 'after', runValidators: true }
       )
 
