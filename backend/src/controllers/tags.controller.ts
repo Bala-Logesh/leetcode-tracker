@@ -49,16 +49,21 @@ export const createTags = async (
     res.status(201).json({ success: true, data: newTags })
   } catch (err: any) {
     if (err.name === 'BulkWriteError' || err.code === 11000) {
-      const insertedCount = err.result?.nInserted || 0
+      const insertedTags = err.insertedDocs || []
+      const insertedCount = insertedTags.length || 0
+
       logger.warn(
         `POST /tags - Some tags skipped due to duplicates. Inserted: ${insertedCount}`
       )
 
       res.status(201).json({
         success: true,
+        data: insertedTags,
         message: 'Tags processed. Existing tags were skipped.',
         insertedCount,
       })
+
+      return
     }
 
     logger.error('POST /tags - Error creating tags', err as Error)

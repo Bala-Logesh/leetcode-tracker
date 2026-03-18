@@ -20,7 +20,7 @@
 import { computed, onMounted, ref } from 'vue';
 import { tagObjects as tags } from '../data/tags'
 import type { IDisplayTag } from '../types/tags';
-import { getTagsAPI } from '../helpers/tags.api';
+import { createTagsAPI, getTagsAPI } from '../helpers/tags.api';
 
 const tagsList = ref<IDisplayTag[]>([]);
 
@@ -41,8 +41,10 @@ const undoRemoveTag = (index: number) => {
     tagsList.value[index].isDeleted = false
 }
 
-const newTagsToCreate = computed(() =>
-    tagsList.value.filter(t => t.isNew && t.name.trim() !== "")
+const newTagsToCreate = computed<string[]>(() => {
+    const tags = tagsList.value.filter(t => t.isNew && t.name.trim() !== "")
+    return tags.map(t => t.name)
+}
 );
 
 const editedTagsToUpdate = computed(() =>
@@ -59,6 +61,7 @@ const tagsToDelete = computed(() =>
 
 const saveChanges = async () => {
     console.log("Creating these:", newTagsToCreate.value);
+    await createTagsAPI(newTagsToCreate.value)
     console.log("Updating these:", editedTagsToUpdate.value);
     console.log("Deleting these:", tagsToDelete.value);
 };

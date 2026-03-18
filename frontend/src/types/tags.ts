@@ -18,7 +18,9 @@ export type ITag = {
 export type ICreateTag = Pick<ITag, 'name'>
 
 // API Types
-export type IGetTagAPI = {
+export type IGetTagsAPIResp = {
   success: boolean
   data: ITag[]
 }
+
+export type ICreateTagsAPIResp = IGetTagsAPIResp
