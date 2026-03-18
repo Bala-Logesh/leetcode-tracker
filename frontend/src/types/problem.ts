@@ -26,6 +26,7 @@ export type ICreateProblem = Omit<
   IProblem,
   '_id' | '__v' | 'solutions' | 'pointsToRemember' | 'dpPoints' | 'tags'
 > & {
+  _id?: string
   tags: ITag[]
   solutions: ICreateSolution[]
   pointsToRemember?: ICreateSolution

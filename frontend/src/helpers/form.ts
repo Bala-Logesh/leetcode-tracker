@@ -3,12 +3,23 @@ import type { RValidateForm } from '../types/returns'
 
 // Function to clean up any empty strings, whitespace-only entries, or empty nested arrays
 const sanitizeForm = (formData: ICreateProblem): ICreateProblem => {
+  const sanitizedDP =
+    formData.dpPoints?.solutions.map((d) => d.trim()).filter((d) => d !== '') ??
+    []
+
   return {
     ...formData,
 
     name: formData.name?.trim() || '',
 
     problemNo: Number(formData.problemNo) || 0,
+
+    tags: formData.tags.map((tag: any) => {
+      if (typeof tag === 'object' && tag !== null && '_id' in tag) {
+        return tag._id
+      }
+      return tag
+    }),
 
     solutions: (formData.solutions || [])
       .map((s) => ({
@@ -26,13 +37,7 @@ const sanitizeForm = (formData: ICreateProblem): ICreateProblem => {
         }
       : undefined,
 
-    dpPoints: formData.dpPoints?.solutions?.length
-      ? {
-          solutions: formData.dpPoints.solutions
-            .map((d) => d.trim())
-            .filter((d) => d !== ''),
-        }
-      : undefined,
+    dpPoints: sanitizedDP.length > 0 ? { solutions: sanitizedDP } : undefined,
 
     datesAttempted: formData.datesAttempted || [],
   }

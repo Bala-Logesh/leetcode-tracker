@@ -55,7 +55,7 @@ import Input from './Input.vue';
 import TextArea from './TextArea.vue';
 import { getTodayDate } from '../helpers/date';
 import { validateForm } from '../helpers/form';
-import { createProblemAPI } from '../helpers/problems.api';
+import { createProblemAPI, editProblemAPI } from '../helpers/problems.api';
 import type { ICreateProblem } from '../types/problem';
 
 const router = useRouter()
@@ -128,13 +128,14 @@ const handleSubmit = async () => {
         return;
     }
 
+    formErrors.value = {};
+
     if (props.isEditing) {
-        console.log(sanitizedData)
-        return
+        await editProblemAPI(problem.value._id ?? '', sanitizedData)
+    } else {
+        await createProblemAPI(sanitizedData);
     }
 
-    formErrors.value = {};
-    await createProblemAPI(sanitizedData);
     router.push({ name: 'problems' });
 }
 </script>

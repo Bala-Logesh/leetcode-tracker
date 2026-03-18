@@ -2,7 +2,7 @@ export type ICreateSolution = {
   solutions: string[]
 }
 
-export type ICreateProblemReq = {
+export type IProblemReq = {
   problemNo: number
   name: string
   tags: string[]

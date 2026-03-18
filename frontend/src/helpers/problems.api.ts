@@ -46,3 +46,22 @@ export const createProblemAPI = async (
     throw handleApiError(err)
   }
 }
+
+export const editProblemAPI = async (
+  problemId: string,
+  updatedProblem: ICreateProblem
+): Promise<IProblem> => {
+  try {
+    const res = await axios.put<IProblemAPIResp>(
+      `${ROUTE}/${problemId}`,
+      { ...updatedProblem },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+
+    return res.data.data
+  } catch (err) {
+    throw handleApiError(err)
+  }
+}

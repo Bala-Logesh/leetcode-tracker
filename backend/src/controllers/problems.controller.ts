@@ -3,15 +3,9 @@ import { APIError } from '../middlewares/errorHandler'
 import logger from '../logger/logger'
 import Problem from '../models/problem'
 import Solution from '../models/solutions'
-import { getOrCreateTags } from '../helpers/tags.helper'
-import {
-  createSolution,
-  createSolutions,
-  deleteAndUpdateSolution,
-  deleteAndUpdateSolutions,
-} from '../helpers/solutions.helper'
+import { createSolution, createSolutions } from '../helpers/solutions.helper'
 import { checkDate } from '../helpers/utils'
-import { ICreateProblemReq } from '../types/problem.types'
+import { IProblemReq } from '../types/problem.types'
 
 // GET /problems
 export const getProblems = async (
@@ -120,7 +114,7 @@ export const createProblem = async (
       pointsToRemember,
       dpPoints,
       datesAttempted,
-    }: ICreateProblemReq = req.body
+    }: IProblemReq = req.body
 
     const newProblem = await Problem.create({
       problemNo,
@@ -176,8 +170,7 @@ export const updateProblem = async (
 ): Promise<void> => {
   const { problemId } = req.params
   try {
-    const updateData = req.body
-    let solDeleted = false
+    const updateData: IProblemReq = req.body
 
     const problem = await Problem.findById(problemId)
     if (!problem) {
@@ -187,51 +180,64 @@ export const updateProblem = async (
       return next(new APIError(`Problem with id ${problemId} not found`, 404))
     }
 
-    if (updateData.tags) {
-      updateData.tags = await getOrCreateTags(updateData.tags)
-    }
+    const updateQuery: any = { $set: {}, $unset: {} }
 
     if (updateData.solutions) {
-      solDeleted = true
-      updateData.solutions = await deleteAndUpdateSolutions(
+      await Solution.deleteMany({ _id: { $in: problem.solutions } })
+      updateQuery.$set.solutions = await createSolutions(
         problem._id,
         updateData.solutions
       )
     }
 
     if (updateData.pointsToRemember) {
-      const pointsToRemId = await deleteAndUpdateSolution(
+      if (problem.pointsToRemember)
+        await Solution.findByIdAndDelete(problem.pointsToRemember)
+      updateQuery.$set.pointsToRemember = await createSolution(
         problem._id,
-        updateData.pointsToRemember,
-        solDeleted
+        updateData.pointsToRemember
       )
-      updateData.pointsToRemember = pointsToRemId
+    } else if (problem.pointsToRemember) {
+      await Solution.findByIdAndDelete(problem.pointsToRemember)
+      updateQuery.$unset.pointsToRemember = ''
     }
 
     if (updateData.dpPoints) {
-      const dpPointsId = await deleteAndUpdateSolution(
+      if (problem.dpPoints) await Solution.findByIdAndDelete(problem.dpPoints)
+      updateQuery.$set.dpPoints = await createSolution(
         problem._id,
-        updateData.dpPoints,
-        solDeleted
+        updateData.dpPoints
       )
-      updateData.dpPoints = dpPointsId
+    } else if (problem.dpPoints) {
+      await Solution.findByIdAndDelete(problem.dpPoints)
+      updateQuery.$unset.dpPoints = ''
     }
 
-    const updateQuery: any = {}
+    if (updateData.datesAttempted && updateData.datesAttempted.length > 0) {
+      const allDatesValid = updateData.datesAttempted.every((dateStr) =>
+        checkDate(dateStr)
+      )
 
-    if (updateData.datesAttempted) {
-      if (!checkDate(updateData.datesAttempted)) {
-        logger.error(`PUT /problems/${problemId} - Date format is wrong`)
-        return next(new APIError('Date format is wrong', 400))
+      if (!allDatesValid) {
+        logger.error(
+          `PUT /problems/${problemId} - One or more dates have an invalid format`
+        )
+        return next(
+          new APIError(
+            'Date format is wrong. Expected: mm/dd/yyyy hh:mm:ss',
+            400
+          )
+        )
       }
 
-      updateQuery.$push = { datesAttempted: updateData.datesAttempted }
-      delete updateData.datesAttempted
+      updateQuery.$addToSet = {
+        datesAttempted: { $each: updateData.datesAttempted },
+      }
     }
 
-    if (Object.keys(updateData).length > 0) {
-      updateQuery.$set = updateData
-    }
+    const { solutions, pointsToRemember, dpPoints, datesAttempted, ...rest } =
+      updateData
+    Object.assign(updateQuery.$set, rest)
 
     const updatedProblem = await Problem.findByIdAndUpdate(
       problem._id,
