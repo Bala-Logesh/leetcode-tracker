@@ -19,9 +19,9 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue';
 import { tagObjects as tags } from '../data/tags'
-import type { EditableTag } from '../types/tags';
+import type { IDisplayTag } from '../types/tags';
 
-const tagsList = ref<EditableTag[]>(
+const tagsList = ref<IDisplayTag[]>(
     tags.map(t => ({ ...t, isNew: false, isDelete: false }))
 );
 
