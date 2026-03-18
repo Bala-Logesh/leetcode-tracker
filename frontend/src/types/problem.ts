@@ -32,23 +32,15 @@ export type ICreateProblem = Omit<
   dpPoints?: ICreateSolution
 }
 
-export const DEFAULT_SOLUTION: ICreateSolution = {
-  solutions: [],
-}
-
-export const DEFAULT_DP_SOLUTION: ICreateSolution = {
-  solutions: ['', ''],
-}
-
-export const DEFAULT_CREATE_PROBLEM: ICreateProblem = {
+export const getInitialProblemState = (): ICreateProblem => ({
   problemNo: 0,
   name: '',
   tags: [],
-  solutions: [{ ...DEFAULT_SOLUTION }],
-  pointsToRemember: { ...DEFAULT_SOLUTION },
-  dpPoints: DEFAULT_DP_SOLUTION,
+  solutions: [{ solutions: [] }],
+  pointsToRemember: { solutions: [] },
+  dpPoints: { solutions: ['', ''] },
   datesAttempted: [],
-}
+})
 
 // API Types
 export type IProblemsAPIResp = {

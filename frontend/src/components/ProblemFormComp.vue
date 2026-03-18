@@ -6,8 +6,13 @@
             </p>
         </div>
         <div class="form">
-            <Input name="Problem Title" v-model="problemTitle" placeholder="Q#. Problem name"
-                :hasError="!!formErrors.name || !!formErrors.problemNo" underline />
+            <div class="title-row">
+                <Input name="No." v-model.number="problem.problemNo" placeholder="Q#" type="number"
+                    :hasError="!!formErrors.problemNo" underline />
+
+                <Input name="Problem Name" v-model="problem.name" placeholder="Problem name"
+                    :hasError="!!formErrors.name" underline />
+            </div>
 
             <TagsSelector v-model="problem.tags" :hasError="!!formErrors.tags" />
 
@@ -23,20 +28,17 @@
 
             <div>
                 <p class="underline">DP Points</p>
-                <Input name="Recurrence Relation" :model-value="dpPoints[0]"
-                    @update:model-value="val => updateDPPoints(0, val)" placeholder="Recurrence Relation" />
-                <Input name="Base Case" :model-value="dpPoints[1]" @update:model-value="val => updateDPPoints(1, val)"
-                    placeholder="Base Case" />
+                <Input name="Recurrence Relation" v-model="recurrenceRelation" placeholder="Recurrence Relation" />
+                <Input name="Base Case" v-model="baseCase" placeholder="Base Case" />
             </div>
 
             <TextArea name="Points To Remember" v-model="problem.pointsToRemember" placeholder="Multiple line points"
                 underline />
 
             <div class="checkbox-group">
-                <input type="checkbox" id="attempt-today" :checked="markedAttempted !== ''"
-                    @change="addTodayToAttemptedDates" />
-                <label for="attempt-today" :class="{ 'text-muted': markedAttempted }">
-                    {{ markedAttempted ? 'Added to attempts' : 'Attempted Today' }}
+                <input type="checkbox" id="attempt-today" :checked="isAttemptedToday" @change="toggleTodayAttempt" />
+                <label for="attempt-today" :class="{ 'text-muted': isAttemptedToday }">
+                    {{ isAttemptedToday ? 'Added to attempts' : 'Attempted Today' }}
                 </label>
             </div>
 
@@ -46,7 +48,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useRouter } from 'vue-router';
 import TagsSelector from './TagsSelector.vue';
 import Input from './Input.vue';
@@ -54,101 +56,86 @@ import TextArea from './TextArea.vue';
 import { getTodayDate } from '../helpers/date';
 import { validateForm } from '../helpers/form';
 import { createProblemAPI } from '../helpers/problems.api';
-import { DEFAULT_CREATE_PROBLEM, DEFAULT_DP_SOLUTION, DEFAULT_SOLUTION, type ICreateProblem } from '../types/problem';
+import type { ICreateProblem } from '../types/problem';
 
 const router = useRouter()
 
 const props = defineProps<{
-    problem: ICreateProblem
+    problem: ICreateProblem,
+    isEditing: boolean
 }>()
-const problem = ref<ICreateProblem>({ ...props.problem })
 
-watch(() => props.problem, (newVal) => {
-    problem.value = { ...newVal }
-})
+const emit = defineEmits(['update:problem']);
+
+const problem = computed({
+    get: () => props.problem,
+    set: (value) => emit('update:problem', value)
+});
 
 const formErrors = ref<Record<string, string>>({})
-const markedAttempted = ref<string>("")
+
+// Computed prop for dp recurrence relation
+const recurrenceRelation = computed({
+    get: () => problem.value.dpPoints?.solutions[0] || "",
+    set: (val) => {
+        if (problem.value.dpPoints) problem.value.dpPoints.solutions[0] = val;
+    }
+});
+
+// Computed prop for dp base case
+const baseCase = computed({
+    get: () => problem.value.dpPoints?.solutions[1] || "",
+    set: (val) => {
+        if (problem.value.dpPoints) problem.value.dpPoints.solutions[1] = val;
+    }
+});
+
+// Computed prop to check if problem is attempted today
+const isAttemptedToday = computed(() => {
+    const todayPrefix = getTodayDate().split(' ')[0];
+    return problem.value.datesAttempted?.some(d => d.startsWith(todayPrefix));
+});
 
 // Add and remove solution text areas
 const addSolution = (): void => {
-    problem.value.solutions.push({ ...DEFAULT_SOLUTION });
+    problem.value.solutions.push({ solutions: [""] });
 };
 
 const removeSolution = (index: number): void => {
     problem.value.solutions.splice(index, 1);
 };
 
-// Computed prop and update function for dp parts - recursive relation and base case
-const dpPoints = computed({
-    get() {
-        const points = problem.value.dpPoints?.solutions || { ...DEFAULT_DP_SOLUTION }.solutions;
-        return [points[0], points[1]];
-    },
-    set(newValue: string[]) {
-        if (problem.value.dpPoints) {
-            problem.value.dpPoints.solutions = newValue;
-        }
-    }
-})
-
-const updateDPPoints = (index: number, val: string) => {
-    const updated = [...dpPoints.value];
-    updated[index] = val;
-    dpPoints.value = updated;
-};
-
-// Computed prop to get problem number and title
-const problemTitle = computed({
-    get() {
-        if (problem.value.problemNo !== 0)
-            return `${problem.value.problemNo}. ${problem.value.name}`
-
-        return ""
-    },
-
-    set(newTitle: string) {
-        const parts = newTitle.split(". ")
-
-        if (parts.length == 2) {
-            problem.value.problemNo = parseInt(parts[0], 10)
-            problem.value.name = parts[1]
-        } else {
-            problem.value.problemNo = 0
-            problem.value.name = ""
-        }
-    }
-})
-
 // Function to add today to attempted dates
-const addTodayToAttemptedDates = () => {
-    if (markedAttempted.value) {
-        problem.value.datesAttempted = problem.value.datesAttempted?.filter(
-            d => d !== markedAttempted.value
-        );
-        markedAttempted.value = "";
-        return;
-    }
+const toggleTodayAttempt = () => {
+    const fullTimestamp = getTodayDate();
+    const todayPrefix = fullTimestamp.split(' ')[0];
 
-    const date = getTodayDate();
-    markedAttempted.value = date;
-    problem.value.datesAttempted?.push(date);
-}
+    if (isAttemptedToday.value) {
+        problem.value.datesAttempted = problem.value.datesAttempted?.filter(
+            d => !d.startsWith(todayPrefix)
+        );
+    } else {
+        problem.value.datesAttempted?.push(fullTimestamp);
+    }
+};
 
 // Handle submit
 const handleSubmit = async () => {
-    const { isValid, errors, sanitizedData } = validateForm(problem.value)
+    const { isValid, errors, sanitizedData } = validateForm(problem.value);
 
     if (!isValid) {
-        formErrors.value = errors
-    } else {
-        formErrors.value = {}
-        const newProblem = await createProblemAPI(sanitizedData)
-        console.log("newProblem", newProblem)
-        problem.value = { ...DEFAULT_CREATE_PROBLEM }
-        problem.value.solutions = [{ ...DEFAULT_SOLUTION }]
-        router.push({ name: 'problems' })
+        formErrors.value = errors;
+        return;
     }
+
+    if (props.isEditing) {
+        console.log(sanitizedData)
+        return
+    }
+
+    formErrors.value = {};
+    await createProblemAPI(sanitizedData);
+    router.push({ name: 'problems' });
 }
 </script>
 
@@ -162,6 +149,19 @@ const handleSubmit = async () => {
     display: flex;
     flex-direction: column;
     gap: 20px;
+}
+
+.form .title-row {
+    display: flex;
+    gap: 10px;
+}
+
+.form .title-row .input-group:first-of-type {
+    width: 50px;
+}
+
+.form .title-row .input-group:nth-of-type(2) {
+    flex: 1;
 }
 
 .errors {

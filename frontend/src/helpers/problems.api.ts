@@ -41,8 +41,6 @@ export const createProblemAPI = async (
       }
     )
 
-    console.log('res.data', res.data)
-
     return res.data.data
   } catch (err) {
     throw handleApiError(err)

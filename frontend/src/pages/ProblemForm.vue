@@ -1,40 +1,32 @@
 <template>
     <h3>{{ isEditing ? "Edit a Problem" : "Create a Problem" }}</h3>
-    <ProblemFormComp :problem="activeProblem" />
+    <ProblemFormComp v-model:problem="activeProblem" isEditing />
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, ref, watchEffect } from 'vue';
 import { useRoute } from 'vue-router';
 import ProblemFormComp from '../components/ProblemFormComp.vue';
 import { getProblemAPIById } from '../helpers/problems.api';
-import { DEFAULT_CREATE_PROBLEM, type ICreateProblem } from '../types/problem';
+import { getInitialProblemState } from '../types/problem';
 
 const route = useRoute()
-const problemIdFromUrl = route.params.id as string
 
-const activeProblem = ref<ICreateProblem>({ ...DEFAULT_CREATE_PROBLEM })
+const activeProblem = ref(getInitialProblemState());
 const isEditing = computed(() => !!route.params.id)
 
-onMounted(async () => {
-    if (problemIdFromUrl) {
-        const problemToEdit = await getProblemAPIById(problemIdFromUrl)
-        if (problemToEdit) {
-            activeProblem.value = { ...problemToEdit }
-        }
-    }
-})
+watchEffect(async () => {
+    const id = route.params.id as string;
 
-watch(() => route.params.id, async (newId) => {
-    if (newId) {
-        const problemToEdit = await getProblemAPIById(problemIdFromUrl)
+    if (id) {
+        const problemToEdit = await getProblemAPIById(id);
         if (problemToEdit) {
-            activeProblem.value = { ...problemToEdit }
+            activeProblem.value = { ...problemToEdit };
         }
     } else {
-        activeProblem.value = { ...DEFAULT_CREATE_PROBLEM }
+        activeProblem.value = getInitialProblemState();
     }
-})
+});
 </script>
 
 <style></style>
