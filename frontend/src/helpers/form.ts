@@ -2,7 +2,7 @@ import type { ICreateProblem } from '../types/problem'
 import type { RValidateForm } from '../types/returns'
 
 // Function to clean up any empty strings, whitespace-only entries, or empty nested arrays
-const sanitizeForm = (formData: ICreateProblem) => {
+const sanitizeForm = (formData: ICreateProblem): ICreateProblem => {
   return {
     ...formData,
 
@@ -10,19 +10,29 @@ const sanitizeForm = (formData: ICreateProblem) => {
 
     problemNo: Number(formData.problemNo) || 0,
 
-    tags: (formData.tags || []).map((t) => t.trim()).filter((t) => t !== ''),
-
     solutions: (formData.solutions || [])
-      .map((lines) => lines.map((l) => l.trim()).filter((l) => l !== ''))
-      .filter((solutionBlock) => solutionBlock.length > 0),
+      .map((s) => ({
+        solutions: s.solutions
+          .map((line) => line.trim())
+          .filter((line) => line !== ''),
+      }))
+      .filter((s) => s.solutions.length > 0),
 
-    pointsToRemember: (formData.pointsToRemember || [])
-      .map((p) => p.trim())
-      .filter((p) => p !== ''),
+    pointsToRemember: formData.pointsToRemember?.solutions?.length
+      ? {
+          solutions: formData.pointsToRemember.solutions
+            .map((p) => p.trim())
+            .filter((p) => p !== ''),
+        }
+      : undefined,
 
-    dpPoints: (formData.dpPoints || [])
-      .map((d) => d.trim())
-      .filter((d) => d !== ''),
+    dpPoints: formData.dpPoints?.solutions?.length
+      ? {
+          solutions: formData.dpPoints.solutions
+            .map((d) => d.trim())
+            .filter((d) => d !== ''),
+        }
+      : undefined,
 
     datesAttempted: formData.datesAttempted || [],
   }

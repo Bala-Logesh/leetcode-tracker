@@ -1,14 +1,4 @@
-import type { ITag } from './tags'
-
-export type ICreateProblem = {
-  problemNo: number
-  name: string
-  tags: string[]
-  solutions: string[][]
-  pointsToRemember?: string[]
-  dpPoints?: string[]
-  datesAttempted?: string[]
-}
+import type { ICreateTag, ITag } from './tags'
 
 export type ISolution = {
   _id: string
@@ -29,12 +19,32 @@ export type IProblem = {
   __v?: number
 }
 
+export type ICreateSolution = Pick<ISolution, 'solutions'>
+
+export type ICreateProblem = Omit<
+  IProblem,
+  '_id' | '__v' | 'solutions' | 'pointsToRemember' | 'dpPoints' | 'tags'
+> & {
+  tags: ICreateTag[]
+  solutions: ICreateSolution[]
+  pointsToRemember?: ICreateSolution
+  dpPoints?: ICreateSolution
+}
+
+export const DEFAULT_SOLUTION: ICreateSolution = {
+  solutions: [],
+}
+
+export const DEFAULT_DP_SOLUTION: ICreateSolution = {
+  solutions: ['', ''],
+}
+
 export const DEFAULT_CREATE_PROBLEM: ICreateProblem = {
   problemNo: 0,
   name: '',
   tags: [],
-  solutions: [[]],
-  pointsToRemember: [],
-  dpPoints: ['', ''],
+  solutions: [{ ...DEFAULT_SOLUTION }],
+  pointsToRemember: { ...DEFAULT_SOLUTION },
+  dpPoints: DEFAULT_DP_SOLUTION,
   datesAttempted: [],
 }

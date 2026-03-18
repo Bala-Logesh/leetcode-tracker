@@ -6,10 +6,10 @@ import ProblemsList from '../pages/ProblemsList.vue'
 import ProblemForm from '../pages/ProblemForm.vue'
 
 const routes = [
-  { path: '/', component: Landing },
-  { path: '/problems', component: ProblemsList },
-  { path: '/problem-form', component: ProblemForm },
-  { path: '/tags', component: TagsManagement },
+  { path: '/', name: 'home', component: Landing },
+  { path: '/problems', name: 'problems', component: ProblemsList },
+  { path: '/problem-form/:id?', name: 'problem-form', component: ProblemForm },
+  { path: '/tags', name: 'tags', component: TagsManagement },
 ]
 
 export const router = createRouter({

@@ -14,3 +14,5 @@ export type ITag = {
   slug: string
   __v?: number
 } & DateType
+
+export type ICreateTag = Pick<ITag, 'name'>

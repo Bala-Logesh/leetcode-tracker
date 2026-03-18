@@ -46,21 +46,29 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue'
-import { DEFAULT_CREATE_PROBLEM, type ICreateProblem } from '../types/problem';
+import { computed, ref, watch } from 'vue'
+import { DEFAULT_CREATE_PROBLEM, DEFAULT_DP_SOLUTION, DEFAULT_SOLUTION, type ICreateProblem } from '../types/problem';
 import TagsSelector from './TagsSelector.vue';
 import Input from './Input.vue';
 import TextArea from './TextArea.vue';
 import { getTodayDate } from '../helpers/date';
 import { validateForm } from '../helpers/form';
 
-const problem = ref<ICreateProblem>(DEFAULT_CREATE_PROBLEM)
+const props = defineProps<{
+    problem: ICreateProblem
+}>()
+const problem = ref<ICreateProblem>({ ...props.problem })
+
+watch(() => props.problem, (newVal) => {
+    problem.value = { ...newVal }
+}, { deep: true })
+
 const formErrors = ref<Record<string, string>>({})
 const markedAttempted = ref<string>("")
 
 // Add and remove solution text areas
 const addSolution = (): void => {
-    problem.value.solutions.push([]);
+    problem.value.solutions.push({ ...DEFAULT_SOLUTION });
 };
 
 const removeSolution = (index: number): void => {
@@ -70,11 +78,13 @@ const removeSolution = (index: number): void => {
 // Computed prop and update function for dp parts - recursive relation and base case
 const dpPoints = computed({
     get() {
-        const points = problem.value.dpPoints || [];
+        const points = problem.value.dpPoints?.solutions || { ...DEFAULT_DP_SOLUTION }.solutions;
         return [points[0], points[1]];
     },
     set(newValue: string[]) {
-        problem.value.dpPoints = [...newValue];
+        if (problem.value.dpPoints) {
+            problem.value.dpPoints.solutions = newValue;
+        }
     }
 })
 
@@ -131,6 +141,7 @@ const handleSubmit = () => {
     } else {
         formErrors.value = {}
         console.log("sanitizedData", sanitizedData)
+        problem.value = { ...DEFAULT_CREATE_PROBLEM }
     }
 }
 </script>

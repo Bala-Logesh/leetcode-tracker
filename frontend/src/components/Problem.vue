@@ -36,24 +36,20 @@
 </template>
 
 <script setup lang="ts">
-import { inject, ref, type Ref } from 'vue';
+import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { getTodayDate } from '../helpers/date';
 import type { IProblem } from '../types/problem';
 
 const router = useRouter()
 const props = defineProps<{ problem: IProblem }>()
-let selectedProblemId = inject<Ref<String>>("selectedProblemId")
 
 const markedAttempted = ref<boolean>(false)
 
 const tags = props.problem.tags.map(t => t.name).join(", ")
 
 const setEditProblem = () => {
-    if (!selectedProblemId) return
-
-    selectedProblemId.value = props.problem._id
-    router.push('/problem-form')
+    router.push({ name: 'problem-form', params: { id: props.problem._id } })
 }
 
 const handleMarkAttempted = () => {

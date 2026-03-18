@@ -2,18 +2,20 @@
     <div>
         <label for="tag" class="tag underline">Tags</label>
         <div class="tags" :class="{ 'error': hasError }">
-            <span v-for="tag in tags" :key="tag" class="tag-item">
-                <input type="checkbox" :id="tag" :value="tag" v-model="model" />
-                <label :for="tag">{{ tag }}</label>
+            <span v-for="tag in tagObjects" :key="tag._id" class="tag-item">
+                <input type="checkbox" :name="tag.name" :value="tag._id" v-model="model" />
+                <label :for="tag.name">{{ tag.name }}</label>
             </span>
         </div>
     </div>
 </template>
 
 <script setup lang="ts">
-import { tags } from '../data/tags'
+import { tagObjects } from '../data/tags'
+import type { ICreateTag } from '../types/tags';
+
 defineProps<{ hasError?: boolean }>()
-const model = defineModel<string[]>();
+const model = defineModel<ICreateTag[]>();
 </script>
 
 <style scoped>

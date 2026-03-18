@@ -13,6 +13,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
+import type { ICreateSolution } from '../types/problem';
 
 const props = defineProps<{
     placeholder: string,
@@ -23,14 +24,15 @@ const props = defineProps<{
     underline?: boolean
 }>()
 
-const solution = defineModel<string[]>()
+const solution = defineModel<ICreateSolution>()
 
 const textData = computed({
     get() {
-        return solution.value?.join('\n') || '';
+        return solution.value?.solutions.join('\n') || '';
     },
     set(newValue: string) {
-        solution.value = newValue.split('\n').map(line => line.trim());
+        if (solution.value)
+            solution.value.solutions = newValue.split('\n').map(line => line.trim());
     }
 })
 
