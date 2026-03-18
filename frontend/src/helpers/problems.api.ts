@@ -4,6 +4,7 @@ import type {
   ICreateProblem,
   IProblem,
   IProblemAPIResp,
+  IProblemRespCommon,
   IProblemsAPIResp,
 } from '../types/problem'
 
@@ -61,6 +62,15 @@ export const editProblemAPI = async (
     )
 
     return res.data.data
+  } catch (err) {
+    throw handleApiError(err)
+  }
+}
+
+export const deleteProblemAPI = async (problemId: string): Promise<void> => {
+  try {
+    const res = await axios.delete<IProblemRespCommon>(`${ROUTE}/${problemId}`)
+    console.log(res.data.message)
   } catch (err) {
     throw handleApiError(err)
   }

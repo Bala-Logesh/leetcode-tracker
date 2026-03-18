@@ -44,8 +44,12 @@ export const getInitialProblemState = (): ICreateProblem => ({
 })
 
 // API Types
-export type IProblemsAPIResp = {
+export type IProblemRespCommon = {
   success: boolean
+  message?: string
+}
+
+export type IProblemsAPIResp = IProblemRespCommon & {
   data: IProblem[]
   pagination: Pagination
 }
