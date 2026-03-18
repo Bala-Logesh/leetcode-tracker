@@ -1,5 +1,6 @@
 <template>
-    <div :class="{ 'error': hasError }">
+    <label for="tag" class="underline">Tags</label>
+    <div class="tags" :class="{ 'error': hasError }">
         <span v-for="tag in tags" :key="tag" class="tag-item">
             <input type="checkbox" :id="tag" :value="tag" v-model="model" />
             <label :for="tag">{{ tag }}</label>
@@ -14,7 +15,13 @@ const model = defineModel<string[]>();
 </script>
 
 <style>
-div.error {
-    border: 1px solid #ff4d4f !important;
+.tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.tags input {
+    margin-right: 6px;
 }
 </style>

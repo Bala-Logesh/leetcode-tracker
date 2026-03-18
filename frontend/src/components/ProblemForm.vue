@@ -1,29 +1,34 @@
 <template>
     {{ formErrors }}
-    <Input name="Problem Title" v-model="problemTitle" placeholder="Q#. Problem name"
-        :hasError="!!formErrors.name || !!formErrors.problemNo" />
+    <div class="form">
+        <Input name="Problem Title" v-model="problemTitle" placeholder="Q#. Problem name"
+            :hasError="!!formErrors.name || !!formErrors.problemNo" underline />
 
-    <TagsSelector v-model="problem.tags" :hasError="!!formErrors.tags" />
+        <TagsSelector v-model="problem.tags" :hasError="!!formErrors.tags" />
 
-    <TextArea v-for="(_, index) of problem.solutions" name="Solution" v-model="problem.solutions[index]"
-        placeholder="Multiple line solutions" :index="index" :removeSolution="removeSolution"
-        :hasError="!!formErrors.solutions" />
+        <p class="underline">Solutions</p>
+        <TextArea v-for="(_, index) of problem.solutions" name="Solution" v-model="problem.solutions[index]"
+            placeholder="Multiple line solutions" :index="index" :removeSolution="removeSolution"
+            :hasError="!!formErrors.solutions" />
 
-    <button @click="addSolution">Add New Solution</button>
+        <button @click="addSolution">Add New Solution</button>
 
-    <div>
-        <p>DP Points</p>
-        <Input name="Recurrence Relation" :model-value="dpPoints[0]" @update:model-value="val => updateDPPoints(0, val)"
-            placeholder="Recurrence Relation" />
-        <Input name="Base Case" :model-value="dpPoints[1]" @update:model-value="val => updateDPPoints(1, val)"
-            placeholder="Base Case" />
+        <div>
+            <p class="underline">DP Points</p>
+            <Input name="Recurrence Relation" :model-value="dpPoints[0]"
+                @update:model-value="val => updateDPPoints(0, val)" placeholder="Recurrence Relation" />
+            <Input name="Base Case" :model-value="dpPoints[1]" @update:model-value="val => updateDPPoints(1, val)"
+                placeholder="Base Case" />
+        </div>
+
+        <TextArea name="Points To Remember" v-model="problem.pointsToRemember" placeholder="Multiple line points"
+            underline />
+
+        <button :disabled="markedAttempted" :class="{ 'disabled': markedAttempted }"
+            @click="addTodayToAttemptedDates">Attempted Today</button>
+
+        <button @click="handleSubmit">Submit</button>
     </div>
-
-    <TextArea name="Points To Remember" v-model="problem.pointsToRemember" placeholder="Multiple line points" />
-
-    <button @click="addTodayToAttemptedDates">Attempted Today</button>
-
-    <button @click="handleSubmit">Submit</button>
     {{ problem }}
 </template>
 
@@ -38,6 +43,7 @@ import { validateForm } from '../helpers/form';
 
 const problem = ref<ICreateProblem>(DEFAULT_CREATE_PROBLEM)
 const formErrors = ref<Record<string, string>>({})
+const markedAttempted = ref<boolean>(false)
 
 // Add and remove solution text areas
 const addSolution = (): void => {
@@ -89,6 +95,7 @@ const problemTitle = computed({
 
 // Function to add today to attempted dates
 const addTodayToAttemptedDates = () => {
+    markedAttempted.value = true
     problem.value.datesAttempted?.push(getTodayDate());
 }
 
@@ -104,4 +111,12 @@ const handleSubmit = () => {
 }
 </script>
 
-<style></style>
+<style>
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    max-width: 800px;
+    margin: 20px;
+}
+</style>
