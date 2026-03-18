@@ -56,3 +56,8 @@ export type IProblemsAPIResp = {
   data: IProblem[]
   pagination: Pagination
 }
+
+export type IProblemAPIResp = {
+  success: boolean
+  data: IProblem
+}
