@@ -1,23 +1,22 @@
 import type { DateType } from './common'
 
-export type IDisplayTag = {
-  _id?: string
-  name: string
-  isNew?: boolean
-  isDeleted?: boolean
-}
-
 export type ITag = {
   _id: string
   name: string
   count: number
   slug: string
-  __v?: number
+  __v: number
 } & DateType
+
+export type IModifyTag = Partial<ITag> &
+  Pick<ITag, 'name'> & {
+    isNew?: boolean
+    isDeleted?: boolean
+  }
 
 export type ICreateTag = Pick<ITag, 'name'>
 
-export type IEditTag = Pick<IDisplayTag, '_id' | 'name'>
+export type IEditTag = Pick<IModifyTag, '_id' | 'name'>
 
 // API Types
 export type ITagsAPIResp = {
