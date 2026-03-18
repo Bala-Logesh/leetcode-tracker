@@ -36,7 +36,7 @@ const textData = computed({
 
 </script>
 
-<style>
+<style scoped>
 .input-group .one-line span {
     font-size: 1.5rem;
     color: var(--color-error);

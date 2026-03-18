@@ -16,7 +16,7 @@ defineProps<{ hasError?: boolean }>()
 const model = defineModel<string[]>();
 </script>
 
-<style>
+<style scoped>
 .tags {
     display: flex;
     flex-wrap: wrap;

@@ -135,7 +135,7 @@ const handleSubmit = () => {
 }
 </script>
 
-<style>
+<style scoped>
 .problem-form {
     margin: 40px auto;
     max-width: 800px;

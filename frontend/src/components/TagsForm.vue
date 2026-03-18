@@ -60,13 +60,13 @@ const saveChanges = async () => {
 };
 </script>
 
-<style>
+<style scoped>
 .tags-container {
     margin: 40px auto;
     max-width: 600px;
 }
 
-.tags-container .tags-list {
+.tags-list {
     display: flex;
     justify-content: start;
     flex-wrap: wrap;
@@ -75,7 +75,7 @@ const saveChanges = async () => {
     margin-top: 10px;
 }
 
-.tags-container .tag-item {
+.tag-item {
     display: flex;
     justify-content: center;
     align-items: center;
@@ -83,27 +83,27 @@ const saveChanges = async () => {
     min-width: 100%;
 }
 
-.tags-container .tag-item input {
+.tag-item input {
     flex: 1;
     min-width: 200px;
 }
 
-.tags-container .tag-item input.newTag {
+.tag-item input.newTag {
     border-color: darkgreen;
 }
 
-.tags-container .tag-item.error {
+.tag-item.error {
     border-color: var(--color-error);
 }
 
-.tags-container .tag-item span {
+.tag-item span {
     width: 30px;
     font-size: 1.5rem;
     color: var(--color-error);
     cursor: pointer;
 }
 
-.tags-container .tag-item span.undo {
+.tag-item span.undo {
     color: darkgreen;
 }
 
