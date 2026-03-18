@@ -12,19 +12,22 @@ const ROUTE = '/problems'
 
 export const getProblemsAPI = async (
   searchText?: string,
-  searchTag?: string
-): Promise<IProblem[]> => {
-  console.log(searchText, searchTag)
+  searchTag?: string,
+  page: number = 1,
+  limit: number = 10
+): Promise<IProblemsAPIResp> => {
   try {
     const params = {
       search: searchText?.trim() || undefined,
       tags: searchTag === 'all' ? undefined : searchTag,
+      page,
+      limit,
     }
 
     const res = await axios.get<IProblemsAPIResp>(ROUTE, {
       params,
     })
-    return res.data.data
+    return res.data
   } catch (err) {
     throw handleApiError(err)
   }

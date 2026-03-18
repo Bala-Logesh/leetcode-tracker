@@ -11,3 +11,12 @@ export type Pagination = {
   hasNextPage: boolean
   hasPrevPage: boolean
 }
+
+export const DEFAULT_PAGINATION = {
+  total: 1,
+  page: 1,
+  limit: 10,
+  totalPages: 1,
+  hasNextPage: false,
+  hasPrevPage: false,
+}
