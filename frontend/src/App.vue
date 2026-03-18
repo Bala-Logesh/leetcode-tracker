@@ -1,11 +1,11 @@
 <script setup lang="ts">
+import { RouterView } from 'vue-router';
+import MainTemplate from './templates/main.vue';
 import './styles.css'
-import ProblemForm from './components/ProblemForm.vue';
-import TagsForm from './components/TagsForm.vue';
-
 </script>
 
 <template>
-  <ProblemForm />
-  <TagsForm />
+  <MainTemplate>
+    <RouterView />
+  </MainTemplate>
 </template>
