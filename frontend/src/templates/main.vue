@@ -7,9 +7,6 @@
                 </h3>
                 <ul>
                     <li>
-                        <RouterLink to="/problems" :class="{ active: routeName === 'problems' }">Problems</RouterLink>
-                    </li>
-                    <li>
                         <RouterLink to="/problem-form" :class="{ active: routeName === 'problem-form' }">Problem Form
                         </RouterLink>
                     </li>
