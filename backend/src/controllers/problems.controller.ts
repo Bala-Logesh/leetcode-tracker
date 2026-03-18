@@ -11,6 +11,7 @@ import {
   deleteAndUpdateSolutions,
 } from '../helpers/solutions.helper'
 import { checkDate } from '../helpers/utils'
+import { ICreateProblemReq } from '../types/problem.types'
 
 // GET /problems
 export const getProblems = async (
@@ -119,7 +120,7 @@ export const createProblem = async (
       pointsToRemember,
       dpPoints,
       datesAttempted,
-    } = req.body
+    }: ICreateProblemReq = req.body
 
     const newProblem = await Problem.create({
       problemNo,

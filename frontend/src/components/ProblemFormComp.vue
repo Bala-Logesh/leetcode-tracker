@@ -47,12 +47,16 @@
 
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
-import { DEFAULT_CREATE_PROBLEM, DEFAULT_DP_SOLUTION, DEFAULT_SOLUTION, type ICreateProblem } from '../types/problem';
+import { useRouter } from 'vue-router';
 import TagsSelector from './TagsSelector.vue';
 import Input from './Input.vue';
 import TextArea from './TextArea.vue';
 import { getTodayDate } from '../helpers/date';
 import { validateForm } from '../helpers/form';
+import { createProblemAPI } from '../helpers/problems.api';
+import { DEFAULT_CREATE_PROBLEM, DEFAULT_DP_SOLUTION, DEFAULT_SOLUTION, type ICreateProblem } from '../types/problem';
+
+const router = useRouter()
 
 const props = defineProps<{
     problem: ICreateProblem
@@ -61,7 +65,7 @@ const problem = ref<ICreateProblem>({ ...props.problem })
 
 watch(() => props.problem, (newVal) => {
     problem.value = { ...newVal }
-}, { deep: true })
+})
 
 const formErrors = ref<Record<string, string>>({})
 const markedAttempted = ref<string>("")
@@ -132,16 +136,18 @@ const addTodayToAttemptedDates = () => {
 }
 
 // Handle submit
-const handleSubmit = () => {
-    console.log(problem.value)
+const handleSubmit = async () => {
     const { isValid, errors, sanitizedData } = validateForm(problem.value)
 
     if (!isValid) {
         formErrors.value = errors
     } else {
         formErrors.value = {}
-        console.log("sanitizedData", sanitizedData)
+        const newProblem = await createProblemAPI(sanitizedData)
+        console.log("newProblem", newProblem)
         problem.value = { ...DEFAULT_CREATE_PROBLEM }
+        problem.value.solutions = [{ ...DEFAULT_SOLUTION }]
+        router.push({ name: 'problems' })
     }
 }
 </script>

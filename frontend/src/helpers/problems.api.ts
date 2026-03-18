@@ -1,6 +1,7 @@
 import axios from './axios'
 import { handleApiError } from './errors'
 import type {
+  ICreateProblem,
   IProblem,
   IProblemAPIResp,
   IProblemsAPIResp,
@@ -22,6 +23,26 @@ export const getProblemAPIById = async (
 ): Promise<IProblem> => {
   try {
     const res = await axios.get<IProblemAPIResp>(`${ROUTE}/${problemId}`)
+    return res.data.data
+  } catch (err) {
+    throw handleApiError(err)
+  }
+}
+
+export const createProblemAPI = async (
+  newProblem: ICreateProblem
+): Promise<IProblem> => {
+  try {
+    const res = await axios.post<IProblemAPIResp>(
+      ROUTE,
+      { ...newProblem },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+
+    console.log('res.data', res.data)
+
     return res.data.data
   } catch (err) {
     throw handleApiError(err)
