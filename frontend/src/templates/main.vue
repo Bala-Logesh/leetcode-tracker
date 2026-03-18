@@ -7,10 +7,11 @@
                 </h3>
                 <ul>
                     <li>
-                        <RouterLink to="/problem" :class="{ active: routeName === 'problem' }">Problem</RouterLink>
+                        <RouterLink to="/problems" :class="{ active: routeName === 'problems' }">Problems</RouterLink>
                     </li>
                     <li>
-                        <RouterLink to="/problem" :class="{ active: routeName === 'problem' }">Create Problem
+                        <RouterLink to="/create-problem" :class="{ active: routeName === 'create-problem' }">Create
+                            Problem
                         </RouterLink>
                     </li>
                     <li>
@@ -61,10 +62,11 @@ nav h3 {
     flex: 1;
 }
 
-nav ul {
+nav > ul {
     display: flex;
     flex-direction: row;
     gap: 20px;
+    list-style: none;
 }
 
 nav ul li a {
