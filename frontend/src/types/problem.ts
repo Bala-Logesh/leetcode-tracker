@@ -1,4 +1,4 @@
-import type { ICreateTag, ITag } from './tags'
+import type { ITag } from './tags'
 
 export type ISolution = {
   _id: string
@@ -25,7 +25,7 @@ export type ICreateProblem = Omit<
   IProblem,
   '_id' | '__v' | 'solutions' | 'pointsToRemember' | 'dpPoints' | 'tags'
 > & {
-  tags: ICreateTag[]
+  tags: ITag[]
   solutions: ICreateSolution[]
   pointsToRemember?: ICreateSolution
   dpPoints?: ICreateSolution

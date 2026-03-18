@@ -14,8 +14,6 @@ export type IModifyTag = Partial<ITag> &
     isDeleted?: boolean
   }
 
-export type ICreateTag = Pick<ITag, 'name'>
-
 export type IEditTag = Pick<IModifyTag, '_id' | 'name'>
 
 // API Types

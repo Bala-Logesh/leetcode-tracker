@@ -17,13 +17,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
-import { type ITag, type IModifyTag, type IEditTag } from '../types/tags';
+import { computed, inject, onMounted, ref } from 'vue';
+import { type IModifyTag, type IEditTag } from '../types/tags';
 import { createTagsAPI, deleteTagsAPI, editTagsAPI, getTagsAPI } from '../helpers/tags.api';
+import { TagKey } from '../helpers/keys';
 
 const tagsList = ref<IModifyTag[]>([]);
-const originalTags = ref<ITag[]>([])
 const isSaving = ref<boolean>(false)
+
+const originalTags = inject(TagKey, ref([]))
 
 onMounted(async () => {
     const tags = await getTagsAPI()
@@ -81,7 +83,6 @@ const saveChanges = async () => {
 
         originalTags.value = refreshedTags;
         tagsList.value = refreshedTags.map(t => ({ ...t, isNew: false, isDelete: false }));
-
     } catch (error) {
         console.log(error);
     } finally {
