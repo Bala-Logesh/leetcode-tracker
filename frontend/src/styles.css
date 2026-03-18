@@ -19,6 +19,7 @@
 
 :root {
     --color-error: #B12123;
+    --color-warning: #ae660d;
     --color-blue-light: #81a7ca;
     --color-blue: #0671D3;
     --color-blue-dark: #024483;
@@ -72,6 +73,19 @@ button.disabled {
 button.error {
     border-color: var(--color-error);
     background-color: var(--color-error);
+}
+
+button.error:hover {
+    background-color: #600608;
+}
+
+button.warning {
+    border-color: var(--color-warning);
+    background-color: var(--color-warning);
+}
+
+button.warning:hover {
+    background-color: #6f4209;
 }
 
 .input-group {

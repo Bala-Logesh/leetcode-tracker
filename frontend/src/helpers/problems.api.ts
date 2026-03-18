@@ -67,6 +67,25 @@ export const editProblemAPI = async (
   }
 }
 
+export const toggleDateAPI = async (
+  problemId: string,
+  newDate: string,
+  isAdding: boolean
+): Promise<void> => {
+  try {
+    const res = await axios.patch<IProblemAPIResp>(
+      `${ROUTE}/${problemId}/attempts`,
+      { dateString: newDate, action: isAdding ? 'add' : 'remove' },
+      {
+        headers: { 'Content-Type': 'application/json' },
+      }
+    )
+    console.log(res.data.data)
+  } catch (err) {
+    throw handleApiError(err)
+  }
+}
+
 export const deleteProblemAPI = async (problemId: string): Promise<void> => {
   try {
     const res = await axios.delete<IProblemRespCommon>(`${ROUTE}/${problemId}`)

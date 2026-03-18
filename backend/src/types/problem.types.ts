@@ -11,3 +11,8 @@ export type IProblemReq = {
   dpPoints?: ICreateSolution
   datesAttempted?: string[]
 }
+
+export type IProblemDateUpd = {
+  dateString: string
+  action: 'add' | 'remove'
+}

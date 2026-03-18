@@ -5,7 +5,7 @@ import Problem from '../models/problem'
 import Solution from '../models/solutions'
 import { createSolution, createSolutions } from '../helpers/solutions.helper'
 import { checkDate } from '../helpers/utils'
-import { IProblemReq } from '../types/problem.types'
+import { IProblemDateUpd, IProblemReq } from '../types/problem.types'
 
 // GET /problems
 export const getProblems = async (
@@ -264,6 +264,74 @@ export const updateProblem = async (
       err as Error
     )
     next(new APIError('Failed to update problem', 500))
+  }
+}
+
+// PATCH /problems/:problemId/attempts
+export const addAttemptDates = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  const { problemId } = req.params
+  const { dateString, action }: IProblemDateUpd = req.body
+
+  try {
+    if (!dateString || !['add', 'remove'].includes(action)) {
+      logger.error(
+        `PATCH /problems/${problemId}/attempts - Invalid date or action provided`
+      )
+      return next(new APIError('Invalid date or action provided', 400))
+    }
+
+    let updateQuery = {}
+
+    if (action === 'add') {
+      if (!checkDate(dateString)) {
+        logger.error(
+          `PATCH /problems/${problemId}/attempts - Full timestamp required for adding: mm/dd/yyyy hh:mm:ss`
+        )
+        return next(
+          new APIError(
+            'Full timestamp required for adding: mm/dd/yyyy hh:mm:ss',
+            400
+          )
+        )
+      }
+
+      updateQuery = { $addToSet: { datesAttempted: dateString } }
+    } else {
+      const datePart = dateString.split(' ')[0]
+
+      updateQuery = {
+        $pull: {
+          datesAttempted: { $regex: `^${datePart}` },
+        },
+      }
+    }
+
+    const updatedProblem = await Problem.findByIdAndUpdate(
+      problemId,
+      updateQuery,
+      { new: true }
+    )
+      .select('datesAttempted')
+      .lean()
+
+    if (!updatedProblem) {
+      logger.error(
+        `PATCH /problems/${problemId}/attempts - Problem with id ${problemId} not found`
+      )
+      return next(new APIError(`Problem with id ${problemId} not found`, 404))
+    }
+
+    res.status(200).json({
+      success: true,
+      data: updatedProblem,
+    })
+  } catch (err) {
+    logger.error(`PATCH /problems/${problemId}/attempts - error`, err as Error)
+    next(new APIError('Failed to update attempt dates', 500))
   }
 }
 

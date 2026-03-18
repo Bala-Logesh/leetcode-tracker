@@ -46,8 +46,4 @@ const handleDelete = async () => {
 .one-line {
     height: 50px;
 }
-
-.one-line button.error:hover {
-    background-color: #600608;
-}
 </style>

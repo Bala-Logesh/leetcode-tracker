@@ -30,8 +30,13 @@
             </ul>
         </div>
 
-        <button :disabled="markedAttempted" @click="handleMarkAttempted" :class="{ 'disabled': markedAttempted }">{{
-            markedAttempted ? 'Attempted today' : 'Mark attempted today' }}</button>
+        <div class="attempt">
+            <input type="checkbox" :checked="markedAttempted" @click="handleMarkAttempted" class="attempt"
+                :class="{ 'warning': markedAttempted }"></input>
+            <p>
+                {{ markedAttempted ? 'Remove attempted today' : 'Mark attempted today' }}
+            </p>
+        </div>
     </div>
 </template>
 
@@ -40,6 +45,7 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 import { getTodayDate } from '../helpers/date';
 import type { IProblem } from '../types/problem';
+import { toggleDateAPI } from '../helpers/problems.api';
 
 const router = useRouter()
 const props = defineProps<{ problem: IProblem }>()
@@ -52,13 +58,25 @@ const setEditProblem = () => {
     router.push({ name: 'problem-form', params: { id: props.problem._id } })
 }
 
-const handleMarkAttempted = () => {
-    if (markedAttempted.value) return
+const handleMarkAttempted = async () => {
+    const fullTimestamp = getTodayDate();
+    const dateOnly = fullTimestamp.split(" ")[0];
 
-    markedAttempted.value = true
-    const date = getTodayDate()
-    props.problem.datesAttempted?.push(date)
-    console.log("Marked Attempted", date)
+    const existingIndex = props.problem.datesAttempted?.findIndex(d =>
+        d.startsWith(dateOnly)
+    ) ?? -1;
+
+    const isAlreadyAttempted = existingIndex !== -1;
+
+    if (isAlreadyAttempted) {
+        props.problem.datesAttempted?.splice(existingIndex, 1);
+        markedAttempted.value = false;
+        await toggleDateAPI(props.problem._id, fullTimestamp, false);
+    } else {
+        props.problem.datesAttempted?.push(fullTimestamp);
+        markedAttempted.value = true;
+        await toggleDateAPI(props.problem._id, fullTimestamp, true);
+    }
 }
 </script>
 
@@ -88,6 +106,12 @@ const handleMarkAttempted = () => {
 .problem h2 {
     text-underline-offset: 5px;
     line-height: 2.2rem;
+}
+
+.problem .attempt {
+    display: flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .solution {
