@@ -6,6 +6,7 @@
             <option v-for="tag in tags" :value="tag._id" :key="tag._id">{{ tag.name }}</option>
         </select>
         <button @click="handleSearch()">Search</button>
+        <button @click="handleReset()">Reset</button>
     </div>
     <div v-for="problem in problems" :key="problem._id">
         <Problem :problem="problem" />
@@ -50,6 +51,12 @@ onMounted(async () => {
     pagination.value = pag
     console.log(pagination.value)
 })
+
+const handleReset = async () => {
+    searchText.value = ""
+    searchTag.value = "all"
+    await handleSearch()
+}
 
 const handleSearch = async (targetPage?: number) => {
     if (targetPage !== undefined) {
@@ -97,6 +104,11 @@ const goToNext = () => {
 
 .search select {
     min-height: 34px;
+    min-width: 200px;
+}
+
+.search button:last-of-type {
+    margin-left: -6px;
 }
 
 .pagination {
