@@ -10,9 +10,20 @@ import type {
 
 const ROUTE = '/problems'
 
-export const getProblemsAPI = async (): Promise<IProblem[]> => {
+export const getProblemsAPI = async (
+  searchText?: string,
+  searchTag?: string
+): Promise<IProblem[]> => {
+  console.log(searchText, searchTag)
   try {
-    const res = await axios.get<IProblemsAPIResp>(ROUTE)
+    const params = {
+      search: searchText?.trim() || undefined,
+      tags: searchTag === 'all' ? undefined : searchTag,
+    }
+
+    const res = await axios.get<IProblemsAPIResp>(ROUTE, {
+      params,
+    })
     return res.data.data
   } catch (err) {
     throw handleApiError(err)

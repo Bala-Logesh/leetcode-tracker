@@ -17,6 +17,7 @@ export const getProblems = async (
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
     const tags = (req.query.tags as string) || ''
+    const search = (req.query.search as string) || ''
     const tagIds = tags ? tags.split(',') : []
 
     const skip = (page - 1) * limit
@@ -24,6 +25,17 @@ export const getProblems = async (
     const query: any = {}
     if (tagIds.length > 0) {
       query.tags = { $in: tagIds }
+    }
+
+    if (search) {
+      const searchAsNum = parseInt(search)
+      const isNumeric = !isNaN(searchAsNum) && /^\d+$/.test(search)
+
+      query.$or = [{ name: { $regex: search, $options: 'i' } }]
+
+      if (isNumeric) {
+        query.$or.push({ problemNo: searchAsNum })
+      }
     }
 
     const [problems, total] = await Promise.all([
