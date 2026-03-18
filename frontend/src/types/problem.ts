@@ -1,3 +1,4 @@
+import type { Pagination } from './common'
 import type { ITag } from './tags'
 
 export type ISolution = {
@@ -47,4 +48,11 @@ export const DEFAULT_CREATE_PROBLEM: ICreateProblem = {
   pointsToRemember: { ...DEFAULT_SOLUTION },
   dpPoints: DEFAULT_DP_SOLUTION,
   datesAttempted: [],
+}
+
+// API Types
+export type IProblemsAPIResp = {
+  success: boolean
+  data: IProblem[]
+  pagination: Pagination
 }

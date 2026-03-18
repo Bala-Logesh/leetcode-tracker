@@ -5,8 +5,16 @@
 </template>
 
 <script setup lang="ts">
+import { onMounted, ref } from 'vue';
 import Problem from '../components/Problem.vue';
-import { problems } from '../data/problem'
+import { getProblemsAPI } from '../helpers/problems.api';
+import { type IProblem } from '../types/problem';
+
+const problems = ref<IProblem[]>([])
+
+onMounted(async () => {
+    problems.value = await getProblemsAPI()
+})
 </script>
 
 <style></style>

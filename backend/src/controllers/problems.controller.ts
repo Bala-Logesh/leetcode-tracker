@@ -21,15 +21,18 @@ export const getProblems = async (
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
-    const tags = req.query.tags || ''
+    const tags = (req.query.tags as string) || ''
+    const tagIds = tags ? tags.split(',') : []
 
     const skip = (page - 1) * limit
 
-    const tagIds = (tags as string).split(',')
-    console.log(tagIds)
+    const query: any = {}
+    if (tagIds.length > 0) {
+      query.tags = { $in: tagIds }
+    }
 
     const [problems, total] = await Promise.all([
-      Problem.find({ tags: { $in: tagIds } })
+      Problem.find(query)
         .sort({ problemNo: 1 })
         .skip(skip)
         .limit(limit)
@@ -38,7 +41,7 @@ export const getProblems = async (
         .populate('dpPoints')
         .populate('pointsToRemember')
         .lean(),
-      Problem.countDocuments({ tags: { $in: tagIds } }),
+      Problem.countDocuments(query),
     ])
 
     const totalPages = Math.ceil(total / limit)
