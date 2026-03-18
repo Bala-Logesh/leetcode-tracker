@@ -10,8 +10,7 @@
                         <RouterLink to="/problems" :class="{ active: routeName === 'problems' }">Problems</RouterLink>
                     </li>
                     <li>
-                        <RouterLink to="/create-problem" :class="{ active: routeName === 'create-problem' }">Create
-                            Problem
+                        <RouterLink to="/problem-form" :class="{ active: routeName === 'problem-form' }">Problem Form
                         </RouterLink>
                     </li>
                     <li>
@@ -62,7 +61,7 @@ nav h3 {
     flex: 1;
 }
 
-nav > ul {
+nav>ul {
     display: flex;
     flex-direction: row;
     gap: 20px;

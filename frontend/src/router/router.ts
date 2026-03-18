@@ -1,14 +1,14 @@
 import { createWebHistory, createRouter } from 'vue-router'
 
 import Landing from '../pages/Landing.vue'
-import CreateProblem from '../pages/CreateProblem.vue'
 import TagsManagement from '../pages/TagsManagement.vue'
 import ProblemsList from '../pages/ProblemsList.vue'
+import ProblemForm from '../pages/ProblemForm.vue'
 
 const routes = [
   { path: '/', component: Landing },
   { path: '/problems', component: ProblemsList },
-  { path: '/create-problem', component: CreateProblem },
+  { path: '/problem-form', component: ProblemForm },
   { path: '/tags', component: TagsManagement },
 ]
 
