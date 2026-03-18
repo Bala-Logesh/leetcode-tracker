@@ -1,10 +1,10 @@
 <template>
     <div class="input-group">
-        <div class="line1">
+        <div class="one-line">
             <label :for="name" :class="{ 'underline': underline }">
                 {{ index !== undefined ? `${name} - ${index + 1}` : name }}
             </label>
-            <span v-if="index !== undefined && removeSolution && index !== 0" class="error"
+            <span v-if="index !== undefined && removeSolution && index !== 0"
                 @click="removeSolution(index)">&times;</span>
         </div>
         <textarea :name="name" v-model="textData" :placeholder="placeholder" rows="5" :class="{ 'error': hasError }" />
@@ -37,15 +37,9 @@ const textData = computed({
 </script>
 
 <style>
-.input-group .line1 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    height: 1.5rem;
-}
-
-.input-group .line1 span.error {
+.input-group .one-line span {
     font-size: 1.5rem;
+    color: var(--color-error);
     cursor: pointer;
 }
 </style>

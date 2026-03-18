@@ -1,35 +1,48 @@
 <template>
-    {{ formErrors }}
-    <div class="form">
-        <Input name="Problem Title" v-model="problemTitle" placeholder="Q#. Problem name"
-            :hasError="!!formErrors.name || !!formErrors.problemNo" underline />
-
-        <TagsSelector v-model="problem.tags" :hasError="!!formErrors.tags" />
-
-        <p class="underline">Solutions</p>
-        <TextArea v-for="(_, index) of problem.solutions" name="Solution" v-model="problem.solutions[index]"
-            placeholder="Multiple line solutions" :index="index" :removeSolution="removeSolution"
-            :hasError="!!formErrors.solutions" />
-
-        <button @click="addSolution">Add New Solution</button>
-
-        <div>
-            <p class="underline">DP Points</p>
-            <Input name="Recurrence Relation" :model-value="dpPoints[0]"
-                @update:model-value="val => updateDPPoints(0, val)" placeholder="Recurrence Relation" />
-            <Input name="Base Case" :model-value="dpPoints[1]" @update:model-value="val => updateDPPoints(1, val)"
-                placeholder="Base Case" />
+    <div class="problem-form">
+        <div v-if="Object.keys(formErrors).length > 0" class="errors">
+            <p v-for="(message, key) in formErrors" :key="key">
+                {{ message }}
+            </p>
         </div>
+        <div class="form">
+            <Input name="Problem Title" v-model="problemTitle" placeholder="Q#. Problem name"
+                :hasError="!!formErrors.name || !!formErrors.problemNo" underline />
 
-        <TextArea name="Points To Remember" v-model="problem.pointsToRemember" placeholder="Multiple line points"
-            underline />
+            <TagsSelector v-model="problem.tags" :hasError="!!formErrors.tags" />
 
-        <button :disabled="markedAttempted" :class="{ 'disabled': markedAttempted }"
-            @click="addTodayToAttemptedDates">Attempted Today</button>
+            <div>
+                <div class="one-line">
+                    <p class="underline">Solutions</p>
+                    <button @click="addSolution">+ Solution</button>
+                </div>
+                <TextArea v-for="(_, index) of problem.solutions" name="Solution" v-model="problem.solutions[index]"
+                    placeholder="Multiple line solutions" :index="index" :removeSolution="removeSolution"
+                    :hasError="!!formErrors.solutions" />
+            </div>
 
-        <button @click="handleSubmit">Submit</button>
+            <div>
+                <p class="underline">DP Points</p>
+                <Input name="Recurrence Relation" :model-value="dpPoints[0]"
+                    @update:model-value="val => updateDPPoints(0, val)" placeholder="Recurrence Relation" />
+                <Input name="Base Case" :model-value="dpPoints[1]" @update:model-value="val => updateDPPoints(1, val)"
+                    placeholder="Base Case" />
+            </div>
+
+            <TextArea name="Points To Remember" v-model="problem.pointsToRemember" placeholder="Multiple line points"
+                underline />
+
+            <div class="checkbox-group">
+                <input type="checkbox" id="attempt-today" :checked="markedAttempted !== ''"
+                    @change="addTodayToAttemptedDates" />
+                <label for="attempt-today" :class="{ 'text-muted': markedAttempted }">
+                    {{ markedAttempted ? 'Added to attempts' : 'Attempted Today' }}
+                </label>
+            </div>
+
+            <button @click="handleSubmit">Submit</button>
+        </div>
     </div>
-    {{ problem }}
 </template>
 
 <script setup lang="ts">
@@ -43,7 +56,7 @@ import { validateForm } from '../helpers/form';
 
 const problem = ref<ICreateProblem>(DEFAULT_CREATE_PROBLEM)
 const formErrors = ref<Record<string, string>>({})
-const markedAttempted = ref<boolean>(false)
+const markedAttempted = ref<string>("")
 
 // Add and remove solution text areas
 const addSolution = (): void => {
@@ -95,28 +108,61 @@ const problemTitle = computed({
 
 // Function to add today to attempted dates
 const addTodayToAttemptedDates = () => {
-    markedAttempted.value = true
-    problem.value.datesAttempted?.push(getTodayDate());
+    if (markedAttempted.value) {
+        problem.value.datesAttempted = problem.value.datesAttempted?.filter(
+            d => d !== markedAttempted.value
+        );
+        markedAttempted.value = "";
+        return;
+    }
+
+    const date = getTodayDate();
+    markedAttempted.value = date;
+    problem.value.datesAttempted?.push(date);
 }
 
 // Handle submit
 const handleSubmit = () => {
+    console.log(problem.value)
     const { isValid, errors, sanitizedData } = validateForm(problem.value)
 
     if (!isValid) {
         formErrors.value = errors
     } else {
+        formErrors.value = {}
         console.log("sanitizedData", sanitizedData)
     }
 }
 </script>
 
 <style>
+.problem-form {
+    margin: 40px auto;
+    max-width: 800px;
+}
+
 .form {
     display: flex;
     flex-direction: column;
     gap: 20px;
-    max-width: 800px;
-    margin: 20px;
+}
+
+.errors {
+    border: 1px solid var(--color-error);
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 6px;
+    color: var(--color-error);
+}
+
+.form .checkbox-group input {
+    margin-right: 6px;
+}
+
+@media (max-width: 800px) {
+    .problem-form {
+        margin: 40px 20px;
+        max-width: 100%;
+    }
 }
 </style>
