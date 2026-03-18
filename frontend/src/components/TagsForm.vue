@@ -17,13 +17,17 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { tagObjects as tags } from '../data/tags'
 import type { IDisplayTag } from '../types/tags';
+import { getTagsAPI } from '../helpers/tags.api';
 
-const tagsList = ref<IDisplayTag[]>(
-    tags.map(t => ({ ...t, isNew: false, isDelete: false }))
-);
+const tagsList = ref<IDisplayTag[]>([]);
+
+onMounted(async () => {
+    const tags = await getTagsAPI()
+    tagsList.value = tags.map(t => ({ ...t, isNew: false, isDelete: false }))
+})
 
 const addTagInput = () => {
     tagsList.value.push({ name: "", isNew: true, isDeleted: false });
