@@ -10,6 +10,7 @@ import {
   deleteAndUpdateSolution,
   deleteAndUpdateSolutions,
 } from '../helpers/solutions.helper'
+import { checkDate } from '../helpers/utils'
 
 // GET /problems
 export const getProblems = async (
@@ -20,11 +21,15 @@ export const getProblems = async (
   try {
     const page = parseInt(req.query.page as string) || 1
     const limit = parseInt(req.query.limit as string) || 10
+    const tags = req.query.tags || ''
 
     const skip = (page - 1) * limit
 
+    const tagIds = (tags as string).split(',')
+    console.log(tagIds)
+
     const [problems, total] = await Promise.all([
-      Problem.find()
+      Problem.find({ tags: { $in: tagIds } })
         .sort({ problemNo: 1 })
         .skip(skip)
         .limit(limit)
@@ -33,7 +38,7 @@ export const getProblems = async (
         .populate('dpPoints')
         .populate('pointsToRemember')
         .lean(),
-      Problem.countDocuments(),
+      Problem.countDocuments({ tags: { $in: tagIds } }),
     ])
 
     const totalPages = Math.ceil(total / limit)
@@ -76,6 +81,9 @@ export const getProblemById = async (
       .lean()
 
     if (!problem) {
+      logger.error(
+        `GET /problems/${problemId} - Problem with id ${problemId} not found`
+      )
       return next(new APIError(`Problem with id ${problemId} not found`, 404))
     }
 
@@ -205,9 +213,25 @@ export const updateProblem = async (
       updateData.dpPoints = dpPointsId
     }
 
+    const updateQuery: any = {}
+
+    if (updateData.datesAttempted) {
+      if (!checkDate(updateData.datesAttempted)) {
+        logger.error(`PUT /problems/${problemId} - Date format is wrong`)
+        return next(new APIError('Date format is wrong', 400))
+      }
+
+      updateQuery.$push = { datesAttempted: updateData.datesAttempted }
+      delete updateData.datesAttempted
+    }
+
+    if (Object.keys(updateData).length > 0) {
+      updateQuery.$set = updateData
+    }
+
     const updatedProblem = await Problem.findByIdAndUpdate(
       problem._id,
-      { $set: updateData },
+      updateQuery,
       { returnDocument: 'after', runValidators: true }
     )
       .populate('tags')
