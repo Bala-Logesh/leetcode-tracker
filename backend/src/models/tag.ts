@@ -46,5 +46,13 @@ tagSchema.pre('findOneAndUpdate', function () {
   }
 })
 
+tagSchema.pre('insertMany', function (docs) {
+  docs.forEach((doc: any) => {
+    if (doc.name) {
+      doc.slug = slugify(doc.name)
+    }
+  })
+})
+
 const Tag = mongoose.model('Tag', tagSchema)
 export default Tag

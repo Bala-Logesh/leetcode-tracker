@@ -22,6 +22,50 @@ export const getTags = async (
   }
 }
 
+// POST /tags
+export const createTags = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const { names } = req.body
+
+    if (!Array.isArray(names) || names.length === 0) {
+      logger.error('POST /tags - An array of tag names is required')
+      return next(new APIError('An array of tag names is required', 400))
+    }
+
+    const cleanTagNames = [
+      ...new Set(names.map((n) => n.trim()).filter((n) => n !== '')),
+    ]
+
+    const newTags = await Tag.insertMany(
+      cleanTagNames.map((name) => ({ name })),
+      { ordered: false }
+    )
+
+    logger.info(`POST /tags - Successfully created ${newTags.length} tags`)
+    res.status(201).json({ success: true, data: newTags })
+  } catch (err: any) {
+    if (err.name === 'BulkWriteError' || err.code === 11000) {
+      const insertedCount = err.result?.nInserted || 0
+      logger.warn(
+        `POST /tags - Some tags skipped due to duplicates. Inserted: ${insertedCount}`
+      )
+
+      res.status(201).json({
+        success: true,
+        message: 'Tags processed. Existing tags were skipped.',
+        insertedCount,
+      })
+    }
+
+    logger.error('POST /tags - Error creating tags', err as Error)
+    next(new APIError('Failed to create tags', 500))
+  }
+}
+
 // PATCH /tags/:tagId
 export const updateTag = async (
   req: Request,
