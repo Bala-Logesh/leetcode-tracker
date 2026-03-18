@@ -18,14 +18,15 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue';
-import { tagObjects as tags } from '../data/tags'
-import type { IDisplayTag } from '../types/tags';
-import { createTagsAPI, getTagsAPI } from '../helpers/tags.api';
+import { type ITag, type IDisplayTag, type IEditTag } from '../types/tags';
+import { createTagsAPI, deleteTagsAPI, editTagsAPI, getTagsAPI } from '../helpers/tags.api';
 
 const tagsList = ref<IDisplayTag[]>([]);
+const originalTags = ref<ITag[]>([])
 
 onMounted(async () => {
     const tags = await getTagsAPI()
+    originalTags.value = tags
     tagsList.value = tags.map(t => ({ ...t, isNew: false, isDelete: false }))
 })
 
@@ -47,23 +48,36 @@ const newTagsToCreate = computed<string[]>(() => {
 }
 );
 
-const editedTagsToUpdate = computed(() =>
-    tagsList.value.filter(t => {
+const editedTagsToUpdate = computed<IEditTag[]>(() => {
+    const tags = tagsList.value.filter(t => {
         if (t.isNew) return false;
-        const original = tags.find(orig => orig._id === t._id);
+        const original = originalTags.value.find(orig => orig._id === t._id);
         return original && t.name !== original.name;
     })
+
+    return tags.map(t => ({ _id: t._id ?? "", name: t.name }))
+}
 );
 
-const tagsToDelete = computed(() =>
-    tagsList.value.filter(t => !t.isNew && t.isDeleted)
+const tagsToDelete = computed<string[]>(() => {
+    const tags = tagsList.value.filter(t => !t.isNew && t.isDeleted)
+    return tags.map(t => t._id ?? "")
+}
 );
 
 const saveChanges = async () => {
     console.log("Creating these:", newTagsToCreate.value);
-    await createTagsAPI(newTagsToCreate.value)
+    if (newTagsToCreate.value.length > 0) {
+        await createTagsAPI(newTagsToCreate.value)
+    }
+
     console.log("Updating these:", editedTagsToUpdate.value);
+    if (editedTagsToUpdate.value.length > 0) {
+        await editTagsAPI(editedTagsToUpdate.value)
+    }
+
     console.log("Deleting these:", tagsToDelete.value);
+    await deleteTagsAPI(tagsToDelete.value)
 };
 </script>
 
