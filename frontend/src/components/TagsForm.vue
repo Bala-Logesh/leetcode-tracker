@@ -13,8 +13,9 @@
 
         <div class="button-group">
             <button :disabled="isSaving" @click="addTagInput" :class="{ 'disabled': isSaving }">+ New Tag</button>
-            <button :disabled="isSaving || !isEditing" :class="{ 'disabled': isSaving || !isEditing }"
-                @click="saveChanges" class="save-btn">Save All Changes</button>
+            <button :disabled="isSaving || !isEditing || hasErrors"
+                :class="{ 'disabled': isSaving || !isEditing || hasErrors }" @click="saveChanges" class="save-btn">Save
+                All Changes</button>
         </div>
 
         <div class="error" v-if="hasErrors">
@@ -32,7 +33,7 @@
 <script setup lang="ts">
 import { computed, inject, onMounted, ref } from 'vue';
 import { type IModifyTag, type IEditTag } from '../types/tags';
-import { createTagsAPI, deleteTagsAPI, editTagsAPI, getTagsAPI } from '../helpers/tags.api';
+import { getTagsAPI, performTagOps } from '../helpers/tags.api';
 import { TagKey } from '../helpers/keys';
 
 const tagsList = ref<IModifyTag[]>([]);
@@ -71,6 +72,11 @@ const addTagInput = () => {
 };
 
 const removeTag = (index: number) => {
+    if (tagsList.value[index].isNew) {
+        tagsList.value.splice(index, 1)
+        return
+    }
+
     tagsList.value[index].isDeleted = true
 }
 
@@ -116,23 +122,15 @@ const isEditing = computed<boolean>(() =>
     newTagsToCreate.value.length > 0 || editedTagsToUpdate.value.length > 0 || tagsToDelete.value.length > 0)
 
 const saveChanges = async () => {
-    try {
-        isSaving.value = true
-        await Promise.all([
-            newTagsToCreate.value.length && createTagsAPI(newTagsToCreate.value),
-            editedTagsToUpdate.value.length && editTagsAPI(editedTagsToUpdate.value),
-            tagsToDelete.value.length && deleteTagsAPI(tagsToDelete.value)
-        ]);
+    isSaving.value = true
 
-        const refreshedTags = await getTagsAPI();
+    await performTagOps(newTagsToCreate.value, editedTagsToUpdate.value, tagsToDelete.value)
 
-        originalTags.value = refreshedTags;
-        tagsList.value = refreshedTags.map(t => ({ ...t, isNew: false, isDelete: false }));
-    } catch (error) {
-        console.log(error);
-    } finally {
-        isSaving.value = false;
-    }
+    const refreshedTags = await getTagsAPI();
+
+    originalTags.value = refreshedTags;
+    tagsList.value = refreshedTags.map(t => ({ ...t, isNew: false, isDelete: false }));
+    isSaving.value = false;
 };
 </script>
 

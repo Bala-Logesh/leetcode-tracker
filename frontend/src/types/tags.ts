@@ -23,6 +23,10 @@ export type ITagsAPIResp = {
   message?: string
 }
 
+export type ITagsStrAPIResp = Omit<ITagsAPIResp, 'data'> & {
+  data: string[]
+}
+
 export type ITagAPIResp = {
   success: boolean
   data: ITag

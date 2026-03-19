@@ -39,7 +39,7 @@ export const createTags = async (
       { ordered: false }
     )
 
-    logger.info(`${LOG_PREFIX} Successfully created ${newTags.length} tags`)
+    logger.info(`${LOG_PREFIX} Successfully created [${newTags.length}] tags`)
     res.status(201).json({ success: true, data: newTags })
   } catch (err: any) {
     if (err.name === 'BulkWriteError' || err.code === 11000) {
@@ -47,14 +47,13 @@ export const createTags = async (
       const insertedCount = insertedTags.length || 0
 
       logger.warn(
-        `${LOG_PREFIX} Some tags skipped due to duplicates. Inserted: ${insertedCount}`
+        `${LOG_PREFIX} Some tags skipped due to duplicates. Inserted: [${insertedCount}]`
       )
 
       res.status(201).json({
         success: true,
         data: insertedTags,
-        message: 'Tags processed. Existing tags were skipped.',
-        insertedCount,
+        message: `[${insertedCount}] Tags created. Existing tags were skipped.`,
       })
 
       return
@@ -72,10 +71,9 @@ export const updateTag = async (
 ): Promise<void> => {
   const { tagId } = req.params
   const LOG_PREFIX = `PATCH /tags/${tagId} -`
+  const { name } = req.body
 
   try {
-    const { name } = req.body
-
     if (!name) {
       throw new APIError('Tag name is required for update', 400)
     }
@@ -94,9 +92,8 @@ export const updateTag = async (
 
     res.status(200).json({ success: true, data: updatedTag })
   } catch (err) {
-    console.log(err)
     if ((err as any).code === 11000) {
-      next(new APIError('A tag with this name already exists', 400))
+      next(new APIError(`A tag with name "${name} already exists`, 400))
       return
     }
 
@@ -116,7 +113,7 @@ export const deleteTag = async (
   const tagToDelete = await Tag.findById(tagId)
 
   if (!tagToDelete) {
-    throw new APIError(`Tag with id ${tagId} not found`, 404)
+    throw new APIError(`Tag with id "${tagId}" not found`, 404)
   }
 
   const updateResult = await Problem.updateMany(
@@ -132,6 +129,6 @@ export const deleteTag = async (
 
   res.status(200).json({
     success: true,
-    message: `Tag deleted and removed from ${updateResult.modifiedCount} problems`,
+    message: `Tag "${tagToDelete.name}" deleted and removed from ${updateResult.modifiedCount} problems`,
   })
 }
