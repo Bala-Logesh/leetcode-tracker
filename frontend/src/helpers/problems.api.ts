@@ -90,18 +90,19 @@ export const toggleDateAPI = async (
   problemId: string,
   newDate: string,
   isAdding: boolean
-): Promise<void> => {
+): Promise<boolean> => {
   try {
-    const res = await axios.patch<IProblemAPIResp>(
+    await axios.patch<IProblemAPIResp>(
       `${ROUTE}/${problemId}/attempts`,
       { dateString: newDate, action: isAdding ? 'add' : 'remove' },
       {
         headers: { 'Content-Type': 'application/json' },
       }
     )
-    console.log(res.data.data)
+    return true
   } catch (err) {
-    throw handleApiError(err)
+    globalError.value = [(err as BackendError).error]
+    return false
   }
 }
 

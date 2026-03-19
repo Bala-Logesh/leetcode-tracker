@@ -342,7 +342,7 @@ export const addAttemptDates = async (
     const updatedProblem = await Problem.findByIdAndUpdate(
       problemId,
       updateQuery,
-      { new: true }
+      { returnDocument: 'after' }
     )
       .select('datesAttempted')
       .lean()

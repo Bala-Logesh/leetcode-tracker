@@ -30,13 +30,9 @@
             </ul>
         </div>
 
-        <div class="attempt">
-            <input type="checkbox" :checked="markedAttempted" @click="handleMarkAttempted" class="attempt"
-                :class="{ 'warning': markedAttempted }"></input>
-            <p>
-                {{ markedAttempted ? 'Remove attempted today' : 'Mark attempted today' }}
-            </p>
-        </div>
+        <p class="attempt" @click="handleMarkAttempted">
+            {{ markedAttempted ? 'Remove attempted today' : 'Mark attempted today' }}
+        </p>
     </div>
 </template>
 
@@ -50,7 +46,11 @@ import { toggleDateAPI } from '../helpers/problems.api';
 const router = useRouter()
 const props = defineProps<{ problem: IProblem }>()
 
-const markedAttempted = ref<boolean>(false)
+const fullTimestamp = getTodayDate();
+const dateOnly = fullTimestamp.split(" ")[0];
+const markedAttempted = ref<boolean>(
+    props.problem.datesAttempted?.some(d => d.startsWith(dateOnly)) ?? false
+);
 
 const tags = props.problem.tags.map(t => t.name).join(", ")
 
@@ -59,23 +59,20 @@ const setEditProblem = () => {
 }
 
 const handleMarkAttempted = async () => {
-    const fullTimestamp = getTodayDate();
-    const dateOnly = fullTimestamp.split(" ")[0];
+    const dateExists = props.problem.datesAttempted?.some(d => d.startsWith(dateOnly)) ?? false
+    const updated = await toggleDateAPI(props.problem._id, fullTimestamp, !dateExists);
 
-    const existingIndex = props.problem.datesAttempted?.findIndex(d =>
-        d.startsWith(dateOnly)
-    ) ?? -1;
+    if (updated) {
+        markedAttempted.value = !markedAttempted.value;
 
-    const isAlreadyAttempted = existingIndex !== -1;
-
-    if (isAlreadyAttempted) {
-        props.problem.datesAttempted?.splice(existingIndex, 1);
-        markedAttempted.value = false;
-        await toggleDateAPI(props.problem._id, fullTimestamp, false);
-    } else {
-        props.problem.datesAttempted?.push(fullTimestamp);
-        markedAttempted.value = true;
-        await toggleDateAPI(props.problem._id, fullTimestamp, true);
+        if (dateExists) {
+            const index = props.problem.datesAttempted?.findIndex(d => d.startsWith(dateOnly)) ?? -1;
+            if (index !== -1) {
+                props.problem.datesAttempted?.splice(index, 1);
+            }
+        } else {
+            props.problem.datesAttempted?.push(fullTimestamp);
+        }
     }
 }
 </script>
@@ -142,6 +139,14 @@ const handleMarkAttempted = async () => {
 
 .section.dp p {
     margin-left: 1.5rem;
+}
+
+.attempt {
+    border: 1px solid black;
+    width: max-content;
+    padding: 5px;
+    border-radius: 6px;
+    cursor: pointer;
 }
 
 @media (max-width: 500px) {
