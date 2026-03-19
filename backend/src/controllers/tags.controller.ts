@@ -5,14 +5,22 @@ import logger from '../logger/logger'
 import Problem from '../models/problem'
 
 // GET /tags
-export const getTags = async (req: Request, res: Response): Promise<void> => {
-  const LOG_PREFIX = 'GET /tags -'
+export const getTags = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> => {
+  try {
+    const LOG_PREFIX = 'GET /tags -'
 
-  const tags = await Tag.find().sort({ name: 1 }).lean()
+    const tags = await Tag.find().sort({ name: 1 }).lean()
 
-  logger.info(`${LOG_PREFIX} returned ${tags.length} tags`)
+    logger.info(`${LOG_PREFIX} returned ${tags.length} tags`)
 
-  res.status(200).json({ success: true, data: tags })
+    res.status(200).json({ success: true, data: tags })
+  } catch (err) {
+    next(new APIError('Failed to get tags', 500))
+  }
 }
 
 // POST /tags
@@ -92,6 +100,11 @@ export const updateTag = async (
 
     res.status(200).json({ success: true, data: updatedTag })
   } catch (err) {
+    if ((err as any).name === 'CastError') {
+      next(new APIError('Invalid tag ID format', 400))
+      return
+    }
+
     if ((err as any).code === 11000) {
       next(new APIError(`A tag with name "${name} already exists`, 400))
       return
@@ -110,25 +123,34 @@ export const deleteTag = async (
   const { tagId } = req.params
   const LOG_PREFIX = `DELETE /tags/${tagId} -`
 
-  const tagToDelete = await Tag.findById(tagId)
+  try {
+    const tagToDelete = await Tag.findById(tagId)
 
-  if (!tagToDelete) {
-    throw new APIError(`Tag with id "${tagId}" not found`, 404)
+    if (!tagToDelete) {
+      throw new APIError(`Tag with id "${tagId}" not found`, 404)
+    }
+
+    const updateResult = await Problem.updateMany(
+      { tags: tagId },
+      { $pull: { tags: tagId } }
+    )
+
+    await tagToDelete.deleteOne()
+
+    logger.info(
+      `${LOG_PREFIX} Tag "${tagToDelete.name}" deleted. Removed from ${updateResult.modifiedCount} problems.`
+    )
+
+    res.status(200).json({
+      success: true,
+      message: `Tag "${tagToDelete.name}" deleted and removed from ${updateResult.modifiedCount} problems`,
+    })
+  } catch (err) {
+    if ((err as any).name === 'CastError') {
+      next(new APIError('Invalid tag ID format', 400))
+      return
+    }
+
+    next(new APIError(`Failed to delete tag with id "${tagId}"`, 500))
   }
-
-  const updateResult = await Problem.updateMany(
-    { tags: tagId },
-    { $pull: { tags: tagId } }
-  )
-
-  await tagToDelete.deleteOne()
-
-  logger.info(
-    `${LOG_PREFIX} Tag "${tagToDelete.name}" deleted. Removed from ${updateResult.modifiedCount} problems.`
-  )
-
-  res.status(200).json({
-    success: true,
-    message: `Tag "${tagToDelete.name}" deleted and removed from ${updateResult.modifiedCount} problems`,
-  })
 }
