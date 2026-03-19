@@ -13,66 +13,63 @@ export const getProblems = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
-  try {
-    const page = parseInt(req.query.page as string) || 1
-    const limit = parseInt(req.query.limit as string) || 10
-    const tags = (req.query.tags as string) || ''
-    const search = (req.query.search as string) || ''
-    const tagIds = tags ? tags.split(',') : []
+  const LOG_PREFIX = 'GET /problems -'
 
-    const skip = (page - 1) * limit
+  const page = parseInt(req.query.page as string) || 1
+  const limit = parseInt(req.query.limit as string) || 10
+  const tags = (req.query.tags as string) || ''
+  const search = (req.query.search as string) || ''
+  const tagIds = tags ? tags.split(',') : []
 
-    const query: any = {}
-    if (tagIds.length > 0) {
-      query.tags = { $in: tagIds }
-    }
+  const skip = (page - 1) * limit
 
-    if (search) {
-      const searchAsNum = parseInt(search)
-      const isNumeric = !isNaN(searchAsNum) && /^\d+$/.test(search)
-
-      query.$or = [{ name: { $regex: search, $options: 'i' } }]
-
-      if (isNumeric) {
-        query.$or.push({ problemNo: searchAsNum })
-      }
-    }
-
-    const [problems, total] = await Promise.all([
-      Problem.find(query)
-        .sort({ problemNo: 1 })
-        .skip(skip)
-        .limit(limit)
-        .populate('tags')
-        .populate('solutions')
-        .populate('dpPoints')
-        .populate('pointsToRemember')
-        .lean(),
-      Problem.countDocuments(query),
-    ])
-
-    const totalPages = Math.ceil(total / limit)
-
-    logger.info(
-      `GET /problems - page ${page}, limit ${limit} - returned ${problems.length} tags`
-    )
-
-    res.status(200).json({
-      success: true,
-      data: problems,
-      pagination: {
-        total,
-        page,
-        limit,
-        totalPages,
-        hasNextPage: page < totalPages,
-        hasPrevPage: page > 1,
-      },
-    })
-  } catch (err) {
-    logger.error(`GET /problems - error getting problems`, err as Error)
-    next(new APIError('Failed to get problems', 500))
+  const query: any = {}
+  if (tagIds.length > 0) {
+    query.tags = { $in: tagIds }
   }
+
+  if (search) {
+    const searchAsNum = parseInt(search)
+    const isNumeric = !isNaN(searchAsNum) && /^\d+$/.test(search)
+
+    query.$or = [{ name: { $regex: search, $options: 'i' } }]
+
+    if (isNumeric) {
+      query.$or.push({ problemNo: searchAsNum })
+    }
+  }
+
+  const [problems, total] = await Promise.all([
+    Problem.find(query)
+      .sort({ problemNo: 1 })
+      .skip(skip)
+      .limit(limit)
+      .populate('tags')
+      .populate('solutions')
+      .populate('dpPoints')
+      .populate('pointsToRemember')
+      .lean(),
+    Problem.countDocuments(query),
+  ])
+
+  const totalPages = Math.ceil(total / limit)
+
+  logger.info(
+    `${LOG_PREFIX} page [${page}], limit [${limit}], tags [${tags}], search [${search}] - returned ${problems.length} problems`
+  )
+
+  res.status(200).json({
+    success: true,
+    data: problems,
+    pagination: {
+      total,
+      page,
+      limit,
+      totalPages,
+      hasNextPage: page < totalPages,
+      hasPrevPage: page > 1,
+    },
+  })
 }
 
 // GET /problems/:problemId
@@ -82,6 +79,8 @@ export const getProblemById = async (
   next: NextFunction
 ): Promise<void> => {
   const { problemId } = req.params
+  const LOG_PREFIX = `GET /problems/${problemId} -`
+
   try {
     const problem = await Problem.findById(problemId)
       .populate('tags')
@@ -91,20 +90,15 @@ export const getProblemById = async (
       .lean()
 
     if (!problem) {
-      logger.error(
-        `GET /problems/${problemId} - Problem with id ${problemId} not found`
-      )
-      return next(new APIError(`Problem with id ${problemId} not found`, 404))
+      throw new APIError(`Problem with id "${problemId}" not found`, 404)
     }
 
-    logger.info(`GET /problems/${problemId} - Success`)
-
+    logger.info(`${LOG_PREFIX} Success`)
     res.status(200).json({ success: true, data: problem })
   } catch (err) {
-    logger.error(`GET /problems/${problemId} - Error`, err as Error)
-
     if ((err as any).name === 'CastError') {
-      return next(new APIError('Invalid Problem ID format', 400))
+      next(new APIError('Invalid Problem ID format', 400))
+      return
     }
 
     next(new APIError('Failed to retrieve problem', 500))
@@ -117,6 +111,8 @@ export const createProblem = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const LOG_PREFIX = 'POST /problems -'
+
   try {
     const {
       problemNo,
@@ -161,7 +157,7 @@ export const createProblem = async (
     ])
 
     logger.info(
-      `POST /problems - created a problem with problem number = ${problemNo} and id = ${newProblem._id}`
+      `${LOG_PREFIX} created a problem with problem number "${problemNo}" and id = "${newProblem._id}"`
     )
 
     res.status(201).json({
@@ -169,7 +165,6 @@ export const createProblem = async (
       data: newProblem,
     })
   } catch (err) {
-    logger.error(`POST /problems - error creating problems`, err as Error)
     next(new APIError('Failed to create problems', 500))
   }
 }
@@ -181,15 +176,14 @@ export const updateProblem = async (
   next: NextFunction
 ): Promise<void> => {
   const { problemId } = req.params
+  const LOG_PREFIX = `PUT /problems${problemId} -`
+
   try {
     const updateData: IProblemReq = req.body
 
     const problem = await Problem.findById(problemId)
     if (!problem) {
-      logger.error(
-        `PUT /problems/${problemId} - Problem with id ${problemId} not found`
-      )
-      return next(new APIError(`Problem with id ${problemId} not found`, 404))
+      throw new APIError(`Problem with id "${problemId}" not found`, 404)
     }
 
     const updateQuery: any = { $set: {}, $unset: {} }
@@ -231,14 +225,9 @@ export const updateProblem = async (
       )
 
       if (!allDatesValid) {
-        logger.error(
-          `PUT /problems/${problemId} - One or more dates have an invalid format`
-        )
-        return next(
-          new APIError(
-            'Date format is wrong. Expected: mm/dd/yyyy hh:mm:ss',
-            400
-          )
+        throw new APIError(
+          'Date format is wrong. Expected: mm/dd/yyyy hh:mm:ss',
+          400
         )
       }
 
@@ -263,7 +252,7 @@ export const updateProblem = async (
       .lean()
 
     logger.info(
-      `PUT /problems/${problemId} - updated problem with id ${problemId} successfully`
+      `${LOG_PREFIX} updated problem with id "${problemId}" successfully`
     )
 
     res.status(200).json({
@@ -271,11 +260,12 @@ export const updateProblem = async (
       data: updatedProblem,
     })
   } catch (err) {
-    logger.error(
-      `PUT /problems/${problemId} - error updating problem`,
-      err as Error
-    )
-    next(new APIError('Failed to update problem', 500))
+    if ((err as any).name === 'CastError') {
+      next(new APIError('Invalid Problem ID format', 400))
+      return
+    }
+
+    next(new APIError(`Failed to update problem with id "${problemId}"`, 500))
   }
 }
 
@@ -286,28 +276,22 @@ export const addAttemptDates = async (
   next: NextFunction
 ): Promise<void> => {
   const { problemId } = req.params
+  const LOG_PREFIX = `PATCH /problems/${problemId}/attempts -`
+
   const { dateString, action }: IProblemDateUpd = req.body
 
   try {
     if (!dateString || !['add', 'remove'].includes(action)) {
-      logger.error(
-        `PATCH /problems/${problemId}/attempts - Invalid date or action provided`
-      )
-      return next(new APIError('Invalid date or action provided', 400))
+      throw new APIError('Invalid date or action provided', 400)
     }
 
     let updateQuery = {}
 
     if (action === 'add') {
       if (!checkDate(dateString)) {
-        logger.error(
-          `PATCH /problems/${problemId}/attempts - Full timestamp required for adding: mm/dd/yyyy hh:mm:ss`
-        )
-        return next(
-          new APIError(
-            'Full timestamp required for adding: mm/dd/yyyy hh:mm:ss',
-            400
-          )
+        throw new APIError(
+          'Full timestamp required for adding: mm/dd/yyyy hh:mm:ss',
+          400
         )
       }
 
@@ -331,19 +315,29 @@ export const addAttemptDates = async (
       .lean()
 
     if (!updatedProblem) {
-      logger.error(
-        `PATCH /problems/${problemId}/attempts - Problem with id ${problemId} not found`
-      )
-      return next(new APIError(`Problem with id ${problemId} not found`, 404))
+      return next(new APIError(`Problem with id "${problemId}" not found`, 404))
     }
+
+    logger.info(
+      `${LOG_PREFIX} ${action === 'add' ? 'added' : 'removed'} date "${dateString}" ${action === 'add' ? 'to' : 'from'} problem with id "${problemId}" successfully`
+    )
 
     res.status(200).json({
       success: true,
       data: updatedProblem,
     })
   } catch (err) {
-    logger.error(`PATCH /problems/${problemId}/attempts - error`, err as Error)
-    next(new APIError('Failed to update attempt dates', 500))
+    if ((err as any).name === 'CastError') {
+      next(new APIError('Invalid Problem ID format', 400))
+      return
+    }
+
+    next(
+      new APIError(
+        `Failed to update attempt dates for problem with id "${problemId}`,
+        500
+      )
+    )
   }
 }
 
@@ -354,14 +348,13 @@ export const deleteProblem = async (
   next: NextFunction
 ): Promise<void> => {
   const { problemId } = req.params
+  const LOG_PREFIX = `DELETE /problems/${problemId} -`
+
   try {
     const problem = await Problem.findById(problemId)
 
     if (!problem) {
-      logger.error(
-        `DELETE /problems/${problemId} - Problem with id ${problemId} not found`
-      )
-      return next(new APIError(`Problem with id ${problemId} not found`, 404))
+      throw new APIError(`Problem with id "${problemId}" not found`, 404)
     }
 
     const solutionIdsToDelete = [
@@ -376,19 +369,19 @@ export const deleteProblem = async (
 
     await problem.deleteOne()
 
-    logger.info(`DELETE /problems/${problemId} - Success`)
+    logger.info(
+      `${LOG_PREFIX} - Problem with id "${problemId}" deleted successfully`
+    )
 
     res.status(200).json({
       success: true,
-      message: 'Problem and associated solutions deleted successfully',
+      message: `Problem with id "${problemId}" and associated solutions deleted successfully`,
     })
   } catch (err) {
-    logger.error(`DELETE /problems/${problemId} - Error`, err as Error)
-
     if ((err as any).name === 'CastError') {
       return next(new APIError('Invalid Problem ID format', 400))
     }
 
-    next(new APIError('Failed to delete problem', 500))
+    next(new APIError(`Failed to delete problem with id "${problemId}"`, 500))
   }
 }
