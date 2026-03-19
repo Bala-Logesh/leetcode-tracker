@@ -106,7 +106,7 @@ export const performTagOps = async (
       toastMessages.push(...deleteRes.errors)
     }
 
-    globalError.value = toastMessages
+    if (toastMessages.length > 0) globalError.value = toastMessages
   } catch (err) {
     console.error('Error occurred in performTagOps function', err)
   }
