@@ -26,11 +26,13 @@
             <p>Made with ❤️</p>
         </footer>
     </div>
+    <Toast />
 </template>
 
 <script setup lang="ts">
 import { computed } from 'vue';
 import { RouterLink, useRoute } from 'vue-router'
+import Toast from '../components/Toast.vue';
 
 const route = useRoute()
 
