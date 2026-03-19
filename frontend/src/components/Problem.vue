@@ -26,7 +26,7 @@
         <div v-if="problem?.datesAttempted" class="section">
             <h3>Attempted Dates</h3>
             <ul>
-                <li v-for="sol in problem.datesAttempted" :key="sol">{{ sol }}</li>
+                <li v-for="sol in problem.datesAttempted" :key="sol">{{ new Date(sol).toDateString() }}</li>
             </ul>
         </div>
 
