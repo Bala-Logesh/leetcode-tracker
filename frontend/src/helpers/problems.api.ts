@@ -106,11 +106,12 @@ export const toggleDateAPI = async (
   }
 }
 
-export const deleteProblemAPI = async (problemId: string): Promise<void> => {
+export const deleteProblemAPI = async (problemId: string): Promise<boolean> => {
   try {
-    const res = await axios.delete<IProblemRespCommon>(`${ROUTE}/${problemId}`)
-    console.log(res.data.message)
+    await axios.delete<IProblemRespCommon>(`${ROUTE}/${problemId}`)
+    return true
   } catch (err) {
-    throw handleApiError(err)
+    globalError.value = [(err as BackendError).error]
+    return false
   }
 }

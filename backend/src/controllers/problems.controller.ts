@@ -365,6 +365,11 @@ export const addAttemptDates = async (
       return
     }
 
+    if (err instanceof APIError) {
+      next(err)
+      return
+    }
+
     next(
       new APIError(
         `Failed to update attempt dates for problem with id "${problemId}`,
@@ -413,6 +418,11 @@ export const deleteProblem = async (
   } catch (err) {
     if ((err as any).name === 'CastError') {
       return next(new APIError('Invalid Problem ID format', 400))
+    }
+
+    if (err instanceof APIError) {
+      next(err)
+      return
     }
 
     next(new APIError(`Failed to delete problem with id "${problemId}"`, 500))
