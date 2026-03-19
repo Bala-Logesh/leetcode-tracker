@@ -1,5 +1,5 @@
 import axios from './axios'
-import { handleApiError } from './errors'
+
 import type {
   ICreateProblem,
   IProblem,

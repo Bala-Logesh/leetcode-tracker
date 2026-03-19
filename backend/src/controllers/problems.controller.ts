@@ -287,7 +287,6 @@ export const updateProblem = async (
     }
 
     const errMsg = checkDuplicateError(err)
-    console.log('errMsg', errMsg)
     if (errMsg) {
       next(new APIError(errMsg, 400))
       return
