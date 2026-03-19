@@ -15,61 +15,65 @@ export const getProblems = async (
 ): Promise<void> => {
   const LOG_PREFIX = 'GET /problems -'
 
-  const page = parseInt(req.query.page as string) || 1
-  const limit = parseInt(req.query.limit as string) || 10
-  const tags = (req.query.tags as string) || ''
-  const search = (req.query.search as string) || ''
-  const tagIds = tags ? tags.split(',') : []
+  try {
+    const page = parseInt(req.query.page as string) || 1
+    const limit = parseInt(req.query.limit as string) || 10
+    const tags = (req.query.tags as string) || ''
+    const search = (req.query.search as string) || ''
+    const tagIds = tags ? tags.split(',') : []
 
-  const skip = (page - 1) * limit
+    const skip = (page - 1) * limit
 
-  const query: any = {}
-  if (tagIds.length > 0) {
-    query.tags = { $in: tagIds }
-  }
-
-  if (search) {
-    const searchAsNum = parseInt(search)
-    const isNumeric = !isNaN(searchAsNum) && /^\d+$/.test(search)
-
-    query.$or = [{ name: { $regex: search, $options: 'i' } }]
-
-    if (isNumeric) {
-      query.$or.push({ problemNo: searchAsNum })
+    const query: any = {}
+    if (tagIds.length > 0) {
+      query.tags = { $in: tagIds }
     }
+
+    if (search) {
+      const searchAsNum = parseInt(search)
+      const isNumeric = !isNaN(searchAsNum) && /^\d+$/.test(search)
+
+      query.$or = [{ name: { $regex: search, $options: 'i' } }]
+
+      if (isNumeric) {
+        query.$or.push({ problemNo: searchAsNum })
+      }
+    }
+
+    const [problems, total] = await Promise.all([
+      Problem.find(query)
+        .sort({ problemNo: 1 })
+        .skip(skip)
+        .limit(limit)
+        .populate('tags')
+        .populate('solutions')
+        .populate('dpPoints')
+        .populate('pointsToRemember')
+        .lean(),
+      Problem.countDocuments(query),
+    ])
+
+    const totalPages = Math.ceil(total / limit)
+
+    logger.info(
+      `${LOG_PREFIX} page [${page}], limit [${limit}], tags [${tags}], search [${search}] - returned ${problems.length} problems`
+    )
+
+    res.status(200).json({
+      success: true,
+      data: problems,
+      pagination: {
+        total,
+        page,
+        limit,
+        totalPages,
+        hasNextPage: page < totalPages,
+        hasPrevPage: page > 1,
+      },
+    })
+  } catch (err) {
+    next(err)
   }
-
-  const [problems, total] = await Promise.all([
-    Problem.find(query)
-      .sort({ problemNo: 1 })
-      .skip(skip)
-      .limit(limit)
-      .populate('tags')
-      .populate('solutions')
-      .populate('dpPoints')
-      .populate('pointsToRemember')
-      .lean(),
-    Problem.countDocuments(query),
-  ])
-
-  const totalPages = Math.ceil(total / limit)
-
-  logger.info(
-    `${LOG_PREFIX} page [${page}], limit [${limit}], tags [${tags}], search [${search}] - returned ${problems.length} problems`
-  )
-
-  res.status(200).json({
-    success: true,
-    data: problems,
-    pagination: {
-      total,
-      page,
-      limit,
-      totalPages,
-      hasNextPage: page < totalPages,
-      hasPrevPage: page > 1,
-    },
-  })
 }
 
 // GET /problems/:problemId
@@ -93,7 +97,7 @@ export const getProblemById = async (
       throw new APIError(`Problem with id "${problemId}" not found`, 404)
     }
 
-    logger.info(`${LOG_PREFIX} Success`)
+    logger.info(`${LOG_PREFIX} Problem with id "${problemId}" found`)
     res.status(200).json({ success: true, data: problem })
   } catch (err) {
     if ((err as any).name === 'CastError') {
@@ -101,7 +105,12 @@ export const getProblemById = async (
       return
     }
 
-    next(new APIError('Failed to retrieve problem', 500))
+    if (err instanceof APIError) {
+      next(err)
+      return
+    }
+
+    next(new APIError('Failed to get problems', 500))
   }
 }
 
@@ -262,6 +271,11 @@ export const updateProblem = async (
   } catch (err) {
     if ((err as any).name === 'CastError') {
       next(new APIError('Invalid Problem ID format', 400))
+      return
+    }
+
+    if (err instanceof APIError) {
+      next(err)
       return
     }
 

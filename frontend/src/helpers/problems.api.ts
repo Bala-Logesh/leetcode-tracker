@@ -7,6 +7,8 @@ import type {
   IProblemRespCommon,
   IProblemsAPIResp,
 } from '../types/problem'
+import { globalError } from './toast.store'
+import type { BackendError } from '../types/common'
 
 const ROUTE = '/problems'
 
@@ -15,7 +17,7 @@ export const getProblemsAPI = async (
   searchTag?: string,
   page: number = 1,
   limit: number = 10
-): Promise<IProblemsAPIResp> => {
+): Promise<IProblemsAPIResp | null> => {
   try {
     const params = {
       search: searchText?.trim() || undefined,
@@ -29,7 +31,8 @@ export const getProblemsAPI = async (
     })
     return res.data
   } catch (err) {
-    throw handleApiError(err)
+    globalError.value = [(err as BackendError).error]
+    return null
   }
 }
 

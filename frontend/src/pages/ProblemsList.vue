@@ -19,11 +19,13 @@
                 <input type="text" v-model="pagination.page" placeholder="1">
                 <p>/ {{ pagination.totalPages }}</p>
             </div>
-            <div class="limit">
-                <label for="limit">Limit</label>
-                <input type="text" placeholder="10" v-model="pagination.limit">
+            <div class="limit-group">
+                <div class="limit">
+                    <label for="limit">Limit</label>
+                    <input type="text" placeholder="10" v-model="pagination.limit">
+                </div>
+                <button @click="handleSearch()">Apply</button>
             </div>
-            <button @click="handleSearch()">Apply</button>
         </div>
         <button :disabled="!pagination.hasNextPage" :class="{ 'disabled': !pagination.hasNextPage }"
             @click="goToNext">Next</button>
@@ -46,10 +48,12 @@ const searchText = ref<string>("")
 const searchTag = ref<string>("all")
 
 onMounted(async () => {
-    const { data, pagination: pag } = await getProblemsAPI()
-    problems.value = data
-    pagination.value = pag
-    console.log(pagination.value)
+    const resp = await getProblemsAPI()
+    if (resp) {
+        const { data, pagination: pag } = resp
+        problems.value = data
+        pagination.value = pag
+    }
 })
 
 const handleReset = async () => {
@@ -63,18 +67,20 @@ const handleSearch = async (targetPage?: number) => {
         pagination.value.page = targetPage;
     }
 
-    const { data, pagination: pag } = await getProblemsAPI(
+    const resp = await getProblemsAPI(
         searchText.value,
         searchTag.value,
         pagination.value.page,
         pagination.value.limit
     );
 
-    problems.value = data;
-    pagination.value = pag;
+    if (resp) {
+        const { data, pagination: pag } = resp
+        problems.value = data
+        pagination.value = pag
+    }
 };
 
-// Logic for the Prev/Next buttons
 const goToPrev = () => {
     if (pagination.value.hasPrevPage) {
         handleSearch(pagination.value.page - 1);
@@ -128,10 +134,26 @@ const goToNext = () => {
     gap: 20px;
 }
 
+.pagination .limit-group {
+    display: flex;
+    gap: 20px;
+}
+
 .pagination .limit,
 .pagination .page {
     display: flex;
     gap: 10px;
     align-items: center;
+}
+
+@media (max-width: 500px) {
+    .pagination {
+        align-items: start;
+    }
+
+    .pagination .options {
+        flex-direction: column;
+        align-items: center;
+    }
 }
 </style>

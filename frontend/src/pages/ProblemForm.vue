@@ -3,7 +3,7 @@
         <h3>{{ isEditing ? "Edit a Problem" : "Create a Problem" }}</h3>
         <button class="error" @click="handleDelete">Delete Problem</button>
     </div>
-    <ProblemFormComp v-model:problem="activeProblem" isEditing />
+    <ProblemFormComp v-model:problem="activeProblem" :isEditing="isEditing" />
 </template>
 
 <script setup lang="ts">
@@ -26,6 +26,8 @@ watchEffect(async () => {
         const problemToEdit = await getProblemAPIById(id);
         if (problemToEdit) {
             activeProblem.value = { ...problemToEdit };
+        } else {
+            router.push({ name: 'problems' });
         }
     } else {
         activeProblem.value = getInitialProblemState();
