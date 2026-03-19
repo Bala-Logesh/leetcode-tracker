@@ -1,6 +1,6 @@
 <template>
     <div class="tags-container">
-        <div class="tags-list">
+        <div v-if="tagsList.length > 0" class="tags-list">
             <div v-for="(tag, index) in tagsList" :key="tag._id" class="tag-item">
                 <input type="text" v-model="tag.name" placeholder="Tag name"
                     :class="{ 'newTag': tag.isNew, 'deleteTag': tag.isDeleted, 'editedTag': isEdited(tag) }" />
@@ -9,9 +9,22 @@
             </div>
         </div>
 
+        <p v-if="tagsList.length === 0">No Tags are present</p>
+
         <div class="button-group">
-            <button :disabled="isSaving" @click="addTagInput">+ New Tag</button>
-            <button :disabled="isSaving" @click="saveChanges" class="save-btn">Save All Changes</button>
+            <button :disabled="isSaving" @click="addTagInput" :class="{ 'disabled': isSaving }">+ New Tag</button>
+            <button :disabled="isSaving || !isEditing" :class="{ 'disabled': isSaving || !isEditing }"
+                @click="saveChanges" class="save-btn">Save All Changes</button>
+        </div>
+
+        <div class="error" v-if="hasErrors">
+            <div v-for="(errorList, category) in errors" :key="category">
+                <ul v-if="errorList.length">
+                    <li v-for="(message, index) in errorList" :key="index">
+                        <strong>{{ category.toUpperCase() }}:</strong> {{ message }}
+                    </li>
+                </ul>
+            </div>
         </div>
     </div>
 </template>
@@ -24,6 +37,11 @@ import { TagKey } from '../helpers/keys';
 
 const tagsList = ref<IModifyTag[]>([]);
 const isSaving = ref<boolean>(false)
+const errors = ref<Record<'new' | 'edit' | 'delete', string[]>>({
+    new: [],
+    edit: [],
+    delete: []
+});
 
 const originalTags = inject(TagKey, ref([]))
 
@@ -32,6 +50,14 @@ onMounted(async () => {
     originalTags.value = tags
     tagsList.value = tags.map(t => ({ ...t, isNew: false, isDelete: false }))
 })
+
+const tagNames = computed(() => {
+    return originalTags.value.map(t => t.name)
+})
+
+const hasErrors = computed(() => {
+    return Object.values(errors.value).some(arr => arr.length > 0);
+});
 
 const isEdited = (tag: IModifyTag) => {
     if (tag.isNew) return false;
@@ -54,12 +80,28 @@ const undoRemoveTag = (index: number) => {
 
 const newTagsToCreate = computed<string[]>(() => {
     const tags = tagsList.value.filter(t => t.isNew && t.name.trim() !== "")
+    errors.value['new'] = []
+
+    for (const tag of tags) {
+        if (tagNames.value.includes(tag.name)) {
+            errors.value['new'].push(`${tag.name} already exists`)
+        }
+    }
+
     return tags.map(t => t.name)
 }
 );
 
 const editedTagsToUpdate = computed<IEditTag[]>(() => {
     const tags = tagsList.value.filter(isEdited)
+    errors.value['edit'] = []
+
+    for (const tag of tags) {
+        if (tagNames.value.includes(tag.name)) {
+            errors.value['edit'].push(`${tag.name} already exists`)
+        }
+    }
+
     return tags.map(t => ({ _id: t._id ?? "", name: t.name }))
 }
 );
@@ -69,6 +111,9 @@ const tagsToDelete = computed<string[]>(() => {
     return tags.map(t => t._id ?? "")
 }
 );
+
+const isEditing = computed<boolean>(() =>
+    newTagsToCreate.value.length > 0 || editedTagsToUpdate.value.length > 0 || tagsToDelete.value.length > 0)
 
 const saveChanges = async () => {
     try {
@@ -95,6 +140,16 @@ const saveChanges = async () => {
 .tags-container {
     margin: 40px auto;
     max-width: 600px;
+}
+
+.tags-container .error {
+    padding: 20px;
+    color: var(--color-error);
+    border-radius: 6px;
+}
+
+.tags-container .error ul {
+    padding-left: 10px;
 }
 
 .tags-list {
@@ -146,6 +201,7 @@ const saveChanges = async () => {
     font-size: 1.5rem;
     color: var(--color-error);
     cursor: pointer;
+    text-align: right;
 }
 
 .tag-item span.undo {
