@@ -5,21 +5,14 @@ import logger from '../logger/logger'
 import Problem from '../models/problem'
 
 // GET /tags
-export const getTags = async (
-  req: Request,
-  res: Response,
-  next: NextFunction
-): Promise<void> => {
-  try {
-    const tags = await Tag.find().sort({ name: 1 }).lean()
+export const getTags = async (req: Request, res: Response): Promise<void> => {
+  const LOG_PREFIX = 'GET /tags -'
 
-    logger.info(`GET /tags - returned ${tags.length} tags`)
+  const tags = await Tag.find().sort({ name: 1 }).lean()
 
-    res.status(200).json({ success: true, data: tags })
-  } catch (err) {
-    logger.error(`GET /tags - error getting tags`, err as Error)
-    next(new APIError('Failed to get tags', 500))
-  }
+  logger.info(`${LOG_PREFIX} returned ${tags.length} tags`)
+
+  res.status(200).json({ success: true, data: tags })
 }
 
 // POST /tags
@@ -28,12 +21,13 @@ export const createTags = async (
   res: Response,
   next: NextFunction
 ): Promise<void> => {
+  const LOG_PREFIX = 'POST /tags -'
+
   try {
     const { names } = req.body
 
     if (!Array.isArray(names) || names.length === 0) {
-      logger.error('POST /tags - An array of tag names is required')
-      return next(new APIError('An array of tag names is required', 400))
+      throw new APIError('Tag names are missing in request body', 400)
     }
 
     const cleanTagNames = [
@@ -45,7 +39,7 @@ export const createTags = async (
       { ordered: false }
     )
 
-    logger.info(`POST /tags - Successfully created ${newTags.length} tags`)
+    logger.info(`${LOG_PREFIX} Successfully created ${newTags.length} tags`)
     res.status(201).json({ success: true, data: newTags })
   } catch (err: any) {
     if (err.name === 'BulkWriteError' || err.code === 11000) {
@@ -53,7 +47,7 @@ export const createTags = async (
       const insertedCount = insertedTags.length || 0
 
       logger.warn(
-        `POST /tags - Some tags skipped due to duplicates. Inserted: ${insertedCount}`
+        `${LOG_PREFIX} Some tags skipped due to duplicates. Inserted: ${insertedCount}`
       )
 
       res.status(201).json({
@@ -66,8 +60,7 @@ export const createTags = async (
       return
     }
 
-    logger.error('POST /tags - Error creating tags', err as Error)
-    next(new APIError('Failed to create tags', 500))
+    next(err)
   }
 }
 
@@ -78,36 +71,36 @@ export const updateTag = async (
   next: NextFunction
 ): Promise<void> => {
   const { tagId } = req.params
+  const LOG_PREFIX = `PATCH /tags/${tagId} -`
 
   try {
     const { name } = req.body
 
     if (!name) {
-      logger.error(`PATCH /tags/${tagId} - Tag name is required for update`)
-      return next(new APIError('Tag name is required for update', 400))
+      throw new APIError('Tag name is required for update', 400)
     }
 
     const updatedTag = await Tag.findOneAndUpdate(
       { _id: tagId },
       { name: name.trim() },
-      { new: true, runValidators: true }
+      { returnDocument: 'after', runValidators: true }
     ).lean()
 
     if (!updatedTag) {
-      logger.error(`PATCH /tags/${tagId} - Tag with id ${tagId} not found`)
-      return next(new APIError(`Tag with id ${tagId} not found`, 404))
+      throw new APIError(`Tag with id ${tagId} not found`, 404)
     }
 
-    logger.info(`PATCH /tags/${tagId} - Tag renamed to "${name}"`)
+    logger.info(`${LOG_PREFIX} Tag renamed to "${name}"`)
 
     res.status(200).json({ success: true, data: updatedTag })
   } catch (err) {
+    console.log(err)
     if ((err as any).code === 11000) {
-      return next(new APIError('A tag with this name already exists', 400))
+      next(new APIError('A tag with this name already exists', 400))
+      return
     }
 
-    logger.error(`PATCH /tags/${tagId} - error updating tag`, err as Error)
-    next(new APIError('Failed to update tag', 500))
+    next(err)
   }
 }
 
@@ -118,32 +111,27 @@ export const deleteTag = async (
   next: NextFunction
 ): Promise<void> => {
   const { tagId } = req.params
+  const LOG_PREFIX = `DELETE /tags/${tagId} -`
 
-  try {
-    const tagToDelete = await Tag.findById(tagId)
+  const tagToDelete = await Tag.findById(tagId)
 
-    if (!tagToDelete) {
-      logger.error(`DELETE /tags/${tagId} - Tag with id ${tagId} not found`)
-      return next(new APIError(`Tag with id ${tagId} not found`, 404))
-    }
-
-    const updateResult = await Problem.updateMany(
-      { tags: tagId },
-      { $pull: { tags: tagId } }
-    )
-
-    await tagToDelete.deleteOne()
-
-    logger.info(
-      `DELETE /tags/${tagId} - Tag "${tagToDelete.name}" deleted. Removed from ${updateResult.modifiedCount} problems.`
-    )
-
-    res.status(200).json({
-      success: true,
-      message: `Tag deleted and removed from ${updateResult.modifiedCount} problems`,
-    })
-  } catch (err) {
-    logger.error(`DELETE /tags/${tagId} - error deleting tag`, err as Error)
-    next(new APIError('Failed to delete tag', 500))
+  if (!tagToDelete) {
+    throw new APIError(`Tag with id ${tagId} not found`, 404)
   }
+
+  const updateResult = await Problem.updateMany(
+    { tags: tagId },
+    { $pull: { tags: tagId } }
+  )
+
+  await tagToDelete.deleteOne()
+
+  logger.info(
+    `${LOG_PREFIX} Tag "${tagToDelete.name}" deleted. Removed from ${updateResult.modifiedCount} problems.`
+  )
+
+  res.status(200).json({
+    success: true,
+    message: `Tag deleted and removed from ${updateResult.modifiedCount} problems`,
+  })
 }
