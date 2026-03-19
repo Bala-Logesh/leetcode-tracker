@@ -6,6 +6,7 @@ import Solution from '../models/solutions'
 import { createSolution, createSolutions } from '../helpers/solutions.helper'
 import { checkDate } from '../helpers/utils'
 import { IProblemDateUpd, IProblemReq } from '../types/problem.types'
+import { checkDuplicateError } from '../helpers/problem.helper'
 
 // GET /problems
 export const getProblems = async (
@@ -173,8 +174,19 @@ export const createProblem = async (
       success: true,
       data: newProblem,
     })
-  } catch (err) {
-    next(new APIError('Failed to create problems', 500))
+  } catch (err: any) {
+    const errMsg = checkDuplicateError(err)
+    if (errMsg) {
+      next(new APIError(errMsg, 400))
+      return
+    }
+
+    if (err instanceof APIError) {
+      next(err)
+      return
+    }
+
+    next(new APIError('Failed to create problem', 500))
   }
 }
 
@@ -271,6 +283,13 @@ export const updateProblem = async (
   } catch (err) {
     if ((err as any).name === 'CastError') {
       next(new APIError('Invalid Problem ID format', 400))
+      return
+    }
+
+    const errMsg = checkDuplicateError(err)
+    console.log('errMsg', errMsg)
+    if (errMsg) {
+      next(new APIError(errMsg, 400))
       return
     }
 

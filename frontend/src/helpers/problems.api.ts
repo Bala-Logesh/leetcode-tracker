@@ -5,6 +5,7 @@ import type {
   IProblem,
   IProblemAPIResp,
   IProblemRespCommon,
+  IProblemReturn,
   IProblemsAPIResp,
 } from '../types/problem'
 import { globalError } from './toast.store'
@@ -38,18 +39,19 @@ export const getProblemsAPI = async (
 
 export const getProblemAPIById = async (
   problemId: string
-): Promise<IProblem> => {
+): Promise<IProblem | null> => {
   try {
     const res = await axios.get<IProblemAPIResp>(`${ROUTE}/${problemId}`)
     return res.data.data
   } catch (err) {
-    throw handleApiError(err)
+    globalError.value = [(err as BackendError).error]
+    return null
   }
 }
 
 export const createProblemAPI = async (
   newProblem: ICreateProblem
-): Promise<IProblem> => {
+): Promise<IProblemReturn> => {
   try {
     const res = await axios.post<IProblemAPIResp>(
       ROUTE,
@@ -59,16 +61,16 @@ export const createProblemAPI = async (
       }
     )
 
-    return res.data.data
+    return { success: true, data: res.data.data }
   } catch (err) {
-    throw handleApiError(err)
+    return { success: false, error: (err as BackendError).error }
   }
 }
 
 export const editProblemAPI = async (
   problemId: string,
   updatedProblem: ICreateProblem
-): Promise<IProblem> => {
+): Promise<IProblemReturn> => {
   try {
     const res = await axios.put<IProblemAPIResp>(
       `${ROUTE}/${problemId}`,
@@ -78,9 +80,9 @@ export const editProblemAPI = async (
       }
     )
 
-    return res.data.data
+    return { success: true, data: res.data.data }
   } catch (err) {
-    throw handleApiError(err)
+    return { success: false, error: (err as BackendError).error }
   }
 }
 

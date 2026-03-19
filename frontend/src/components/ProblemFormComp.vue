@@ -57,6 +57,7 @@ import { getTodayDate } from '../helpers/date';
 import { validateForm } from '../helpers/form';
 import { createProblemAPI, editProblemAPI } from '../helpers/problems.api';
 import type { ICreateProblem } from '../types/problem';
+import { globalError } from '../helpers/toast.store';
 
 const router = useRouter()
 
@@ -129,14 +130,27 @@ const handleSubmit = async () => {
     }
 
     formErrors.value = {};
+    let resp = null
 
     if (props.isEditing) {
-        await editProblemAPI(problem.value._id ?? '', sanitizedData)
+        resp = await editProblemAPI(problem.value._id ?? '', sanitizedData)
     } else {
-        await createProblemAPI(sanitizedData);
+        resp = await createProblemAPI(sanitizedData);
     }
 
-    router.push({ name: 'problems' });
+    if (resp && resp.success) {
+        router.push({ name: 'problems' });
+    }
+
+    const errorMsg = resp?.error || ""
+
+    if (errorMsg.includes("name = ")) {
+        formErrors.value = { name: errorMsg }
+    } else if (errorMsg.includes("problemNo = ")) {
+        formErrors.value = { name: errorMsg }
+    } else if (errorMsg) {
+        globalError.value = [errorMsg]
+    }
 }
 </script>
 

@@ -6,7 +6,7 @@ export const toastStore = reactive({
 })
 
 export const globalError = ref<string[] | null>(null)
-export const hideAutomatically = ref<boolean>(false)
+export const hideAutomatically = ref<boolean>(true)
 
 watch(globalError, (newVal) => {
   if (newVal) {

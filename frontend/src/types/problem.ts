@@ -58,3 +58,9 @@ export type IProblemAPIResp = {
   success: boolean
   data: IProblem
 }
+
+export type IProblemReturn = {
+  success: boolean
+  data?: IProblem
+  error?: string
+}
