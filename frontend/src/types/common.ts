@@ -3,6 +3,15 @@ export type DateType = {
   updatedAt: string
 }
 
+export type IErrors = {
+  errors: string[]
+}
+
+export type BackendError = {
+  error: string
+  status: number
+}
+
 export type Pagination = {
   total: number
   page: number
