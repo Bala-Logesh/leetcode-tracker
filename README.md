@@ -33,14 +33,7 @@ A simple Leetcode Problem tracker built using VueJS and Express
 ## Installation
 
 - Make sure MongoDB is installed and add the MongoDB URI to the .env file
-
-### Frontend
-
-```
-cd frontend
-npm i
-npm run dev
-```
+- Frontend is already built and is served as static files from the backend
 
 ### Backend
 
@@ -48,6 +41,26 @@ npm run dev
 cd backend
 npm i
 npm run dev
+```
+
+- The application can be accessed on http://localhost:5000
+
+### Frontend
+
+- You do not need to do this step if you do not want to build the application
+
+```
+cd frontend
+npm i
+npm run dev
+```
+
+- To build the frontend to 'backend/src/static'
+
+```
+cd frontend
+npm i
+npm run build
 ```
 
 ## Additional Notes
